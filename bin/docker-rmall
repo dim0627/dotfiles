@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Stops all docker containers
+docker rm $(docker ps -aq)

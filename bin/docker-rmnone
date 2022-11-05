@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Remove all none images
+docker rmi $(docker images -f "dangling=true" -q)

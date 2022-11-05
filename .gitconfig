@@ -1,0 +1,22 @@
+[ghq]
+    root = ~/Develop/repositories/src
+[user]
+	name = Daisuke Tsuji
+	email = dim0627@gmail.com
+	signingkey = F353FFE48FCA5388
+[core]
+	editor = vim
+[commit]
+	gpgsign = true
+
+[alias]
+	p = push
+	ch = checkout
+	co = commit
+	fixit = commit --amend --no-edit
+[init]
+	defaultBranch = main
+[fetch]
+	prune = true
+[push]
+	autoSetupRemote = true
