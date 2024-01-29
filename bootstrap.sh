@@ -22,6 +22,8 @@ brew install ghq
 brew install gpg
 brew install mysql
 brew install postgresql
+brew install nodenv
+brew install rbenv
 
 # pip3 install neovim
 
@@ -30,10 +32,7 @@ ln -s $SCRIPT_DIR/.zlogout $HOME/.zlogout
 ln -s $SCRIPT_DIR/.tmux.conf $HOME/.tmux.conf
 ln -snf $SCRIPT_DIR/.hyper.js $HOME/.hyper.js
 ln -s $SCRIPT_DIR/.gitconfig $HOME/.gitconfig
-ln -s $SCRIPT_DIR/.git_commit_message $HOME/.git_commit_message
 ln -s $SCRIPT_DIR/.ignore $HOME/.ignore
-git config --global commit.template $HOME/.git_commit_message
 # ln -s $SCRIPT_DIR/nvim $HOME/.config/nvim
 ln -s $SCRIPT_DIR/bin $HOME/bin
-ln -s $SCRIPT_DIR/vscode/keybindings.json /Users/tsujidaisuke/Library/Application\ Support/Code/User/
-ln -s $SCRIPT_DIR/vscode/settings.json /Users/tsujidaisuke/Library/Application\ Support/Code/User/
+
