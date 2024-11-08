@@ -24,6 +24,8 @@ brew install mysql
 brew install postgresql
 brew install nodenv
 brew install rbenv
+brew install zsh-autosuggestions
+brew install zsh-syntax-highlighting
 
 # pip3 install neovim
 
