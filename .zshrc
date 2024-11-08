@@ -71,6 +71,10 @@ alias git-rm-stale='git branch --merged | egrep -v "(^\*|master|main|development
 alias chrome="open -a /Applications/Google\ Chrome.app"
 alias p="pnpm"
 
+if type trash > /dev/null 2>&1; then
+    alias rm='trash -F'
+fi
+
 # ##### ##### ##### ##### #####
 # ssh-agent
 # eval `ssh-agent`
@@ -163,6 +167,12 @@ function peco-src () {
 zle -N peco-src
 bindkey '^]' peco-src
 
+# ##### ##### ##### ##### #####
+# walk
+function lk {
+  cd "$(walk "$@")"
+}
+
 # ## History
 function peco-history-selection() {
     BUFFER=`history -n 1 | tail -r | awk '!a[$0]++' | peco`
@@ -178,14 +188,6 @@ if [ -f '/Users/tsujidaisuke/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/ts
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/tsujidaisuke/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/tsujidaisuke/google-cloud-sdk/completion.zsh.inc'; fi
-
-# pnpm
-export PNPM_HOME="/Users/tsujidaisuke/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
 
 # zsh
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
