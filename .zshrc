@@ -69,10 +69,7 @@ alias by="bundle && yarn"
 alias ag='ag --path-to-ignore ~/.ignore'
 alias git-rm-stale='git branch --merged | egrep -v "(^\*|master|main|development|develop)" | xargs git branch -d'
 alias chrome="open -a /Applications/Google\ Chrome.app"
-
-if type trash > /dev/null 2>&1; then
-    alias rm='trash -F'
-fi
+alias p="pnpm"
 
 # ##### ##### ##### ##### #####
 # ssh-agent
@@ -166,12 +163,6 @@ function peco-src () {
 zle -N peco-src
 bindkey '^]' peco-src
 
-# ##### ##### ##### ##### #####
-# walk
-function lk {
-  cd "$(walk "$@")"
-}
-
 # ## History
 function peco-history-selection() {
     BUFFER=`history -n 1 | tail -r | awk '!a[$0]++' | peco`
@@ -195,8 +186,6 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
-# export PATH="/opt/homebrew/opt/gradle@7/bin:$PATH"
-export PATH="/opt/homebrew/opt/gradle@6/bin:$PATH"
 
 # zsh
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
