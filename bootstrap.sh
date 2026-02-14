@@ -8,26 +8,18 @@ brew update
 brew install wget
 brew install git
 brew install tree
-brew install tig
 brew install ag
 brew install jq
 brew install python3
-# brew install neovim
 brew install peco
-brew install envchain
 brew install tmux
 brew install fd
 brew install reattach-to-user-namespace
 brew install ghq
 brew install gpg
-brew install mysql
-brew install postgresql
 brew install nodenv
-brew install rbenv
 brew install zsh-autosuggestions
 brew install zsh-syntax-highlighting
-
-# pip3 install neovim
 
 ln -s $SCRIPT_DIR/.zshrc $HOME/.zshrc
 ln -s $SCRIPT_DIR/.zlogout $HOME/.zlogout
@@ -38,3 +30,7 @@ ln -s $SCRIPT_DIR/.ignore $HOME/.ignore
 # ln -s $SCRIPT_DIR/nvim $HOME/.config/nvim
 ln -s $SCRIPT_DIR/bin $HOME/bin
 
+# Claude Code 設定
+mkdir -p $HOME/.claude
+ln -sf $SCRIPT_DIR/claude/CLAUDE.md $HOME/.claude/CLAUDE.md
+ln -sf $SCRIPT_DIR/claude/settings.json $HOME/.claude/settings.json
