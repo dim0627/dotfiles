@@ -72,7 +72,7 @@ alias chrome="open -a /Applications/Google\ Chrome.app"
 alias p="pnpm"
 
 if type trash > /dev/null 2>&1; then
-    alias rm='trash -F'
+    alias rm='trash'
 fi
 
 # ##### ##### ##### ##### #####
