@@ -14,6 +14,7 @@
 	ch = checkout
 	co = commit
 	fixit = commit --amend --no-edit
+	push-f = push --force-with-lease
 [init]
 	defaultBranch = main
 [fetch]
