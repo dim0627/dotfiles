@@ -1,6 +1,5 @@
 {
   "permissions": {
-    "defaultMode": "auto",
     "allow": [
       "Bash(git log:*)",
       "Bash(git diff:*)",
@@ -39,7 +38,8 @@
       "Bash(afplay:*)",
       "WebSearch"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   },
   "hooks": {
     "PermissionRequest": [
@@ -68,5 +68,6 @@
   "enabledPlugins": {
     "feature-dev@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true
-  }
+  },
+  "skipAutoPermissionPrompt": true
 }
