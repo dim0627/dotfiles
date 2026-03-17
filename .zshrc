@@ -1,25 +1,18 @@
 export XDG_CONFIG_HOME=~/.config
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
-fpath=(/usr/local/share/zsh-completions $fpath)
+fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 autoload -U compinit
-compinit -u
+# 1日1回だけcompinit再生成（キャッシュで高速化）
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
 
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
-autoload -Uz vcs_info
-setopt prompt_subst
-zstyle ':vcs_info:git:*' check-for-changes true
-zstyle ':vcs_info:git:*' stagedstr "%F{yellow}!"
-zstyle ':vcs_info:git:*' unstagedstr "%F{red}*"
-zstyle ':vcs_info:*' formats "%F{green}(%c%u%b%f%F{green})%f "
-zstyle ':vcs_info:*' actionformats '[%b|%a]'
-precmd () { vcs_info }
-PROMPT='[%D %T] %F{red}%~%f ${vcs_info_msg_0_}%F{blue}$%f '
-PROMPT2='[%D] %F{red}%_%f %F{blue}~%f '
-SPROMPT='%F{red}%r is correct? [n,y,a,e]:%f %F{blue}$%f '
-[ -n '${REMOTEHOST}${SSH_CONNECTION}' ] &&
-
-  HISTFILE=~/.zsh_history
+HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
 setopt hist_ignore_dups # ignore duplication command history list
@@ -57,23 +50,18 @@ export PATH=$PATH:~/bin
 # ##### ##### ##### ##### #####
 # Alias
 setopt complete_aliases
-# alias vim='env LANG=ja_JP.UTF-8 /Applications/MacVim.app/Contents/MacOS/Vim -g "$@"'
 alias vim='nvim'
 alias ls='ls -vFG'
 alias l='ls -la'
 alias ll="ls -l"
-# alias ag="pt"
 alias weather="curl http://wttr.in/"
-alias be="bundle exec"
-alias by="bundle && yarn"
-alias ag='ag --path-to-ignore ~/.ignore'
+alias ag='rg'
 alias git-rm-stale='git branch --merged | egrep -v "(^\*|master|main|development|develop)" | xargs git branch -d'
 alias chrome="open -a /Applications/Google\ Chrome.app"
 alias p="pnpm"
 
 # ##### ##### ##### ##### #####
 # ssh-agent
-# eval `ssh-agent`
 SSH_KEY_LIFE_TIME_SEC=3600
 
 SSH_AGENT_FILE=$HOME/.ssh-agent
@@ -82,12 +70,7 @@ if [ $( ps -ef | grep ssh-agent | grep -v grep | wc -l ) -eq 0 ]; then
     ssh-agent -t $SSH_KEY_LIFE_TIME_SEC > $SSH_AGENT_FILE
     source $SSH_AGENT_FILE > /dev/null 2>&1
 fi
-ssh-add ~/.ssh/id_rsa
-
-# ##### ##### ##### ##### #####
-# Golang
-# export GOPATH=$HOME/Develop/repositories
-export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin/ #:$GOPATH/bin
+ssh-add -l > /dev/null 2>&1 || ssh-add ~/.ssh/id_rsa
 
 # ##### ##### ##### ##### #####
 # Function
@@ -133,21 +116,9 @@ ls_abbrev() {
 # nodenv
 eval "$(nodenv init -)"
 
-# rbenv
-export PATH=$PATH:$HOME/.rbenv/bin
-eval "$(rbenv init -)"
-
 # starship
 # https://starship.rs
 eval "$(starship init zsh)"
-
-# ##### ##### ##### ##### #####
-# direnv
-# eval "$(direnv hook zsh)"
-
-# ##### ##### ##### ##### #####
-# Golang
-export GOPATH=/Users/tsujidaisuke/go
 
 # ##### ##### ##### ##### #####
 # peco
@@ -179,13 +150,7 @@ function peco-history-selection() {
 zle -N peco-history-selection
 bindkey '^R' peco-history-selection
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/tsujidaisuke/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/tsujidaisuke/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/tsujidaisuke/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/tsujidaisuke/google-cloud-sdk/completion.zsh.inc'; fi
-
 # zsh
-source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 export PATH="$HOME/.local/bin:$PATH"
