@@ -56,7 +56,7 @@ alias l='ls -la'
 alias ll="ls -l"
 alias weather="curl http://wttr.in/"
 alias ag='rg'
-alias git-rm-stale='git branch --merged | egrep -v "(^\*|master|main|development|develop)" | xargs git branch -d'
+alias git-rm-branches='git branch | grep -v "^\*" | xargs git branch -d'
 alias chrome="open -a /Applications/Google\ Chrome.app"
 alias p="pnpm"
 
