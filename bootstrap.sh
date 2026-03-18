@@ -21,6 +21,7 @@ brew install gh
 brew install pnpm
 brew install zsh-autosuggestions
 brew install zsh-syntax-highlighting
+brew install git-delta
 
 ln -s $SCRIPT_DIR/.zshrc $HOME/.zshrc
 ln -s $SCRIPT_DIR/.zlogout $HOME/.zlogout

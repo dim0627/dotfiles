@@ -6,9 +6,20 @@
 	signingkey = F353FFE48FCA5388
 [core]
 	editor = vim
+	pager = delta
 [commit]
 	gpgsign = true
 
+
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	side-by-side = true
+[merge]
+	conflictstyle = zdiff3
+[diff]
+	colorMoved = default
 [alias]
 	p = push
 	ch = checkout
