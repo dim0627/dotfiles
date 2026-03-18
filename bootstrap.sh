@@ -4,24 +4,7 @@ SCRIPT_DIR=$(cd $(dirname $0); pwd)
 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 brew update
-
-brew install wget
-brew install git
-brew install tree
-brew install ripgrep
-brew install jq
-brew install peco
-brew install tmux
-brew install fd
-brew install reattach-to-user-namespace
-brew install ghq
-brew install nodenv
-brew install starship
-brew install gh
-brew install pnpm
-brew install zsh-autosuggestions
-brew install zsh-syntax-highlighting
-brew install git-delta
+brew bundle --file=$SCRIPT_DIR/Brewfile
 
 ln -s $SCRIPT_DIR/.zshrc $HOME/.zshrc
 ln -s $SCRIPT_DIR/.zlogout $HOME/.zlogout
