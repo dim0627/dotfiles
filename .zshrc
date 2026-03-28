@@ -59,6 +59,8 @@ alias ag='rg'
 alias git-rm-branches='git branch | grep -v "^\*" | xargs git branch -d'
 alias chrome="open -a /Applications/Google\ Chrome.app"
 alias p="pnpm"
+alias d="docker"
+alias dc="docker compose"
 
 # ##### ##### ##### ##### #####
 # ssh-agent
