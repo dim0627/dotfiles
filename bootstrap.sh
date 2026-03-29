@@ -17,5 +17,4 @@ ln -s $SCRIPT_DIR/bin $HOME/bin
 mkdir -p $HOME/.claude
 ln -sf $SCRIPT_DIR/claude/CLAUDE.md $HOME/.claude/CLAUDE.md
 ln -sf $SCRIPT_DIR/claude/settings.json $HOME/.claude/settings.json
-mkdir -p $HOME/.claude/skills
-ln -snf $SCRIPT_DIR/claude/skills/sync $HOME/.claude/skills/sync
+ln -snf $SCRIPT_DIR/claude/skills $HOME/.claude/skills
