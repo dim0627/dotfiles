@@ -11,6 +11,10 @@
 
 プロジェクトに `justfile` がある場合は必ず参照し、利用可能なレシピを把握すること。`just --list` でレシピ一覧を確認できる。
 
+## React コンポーネント設計方針
+
+- **Props は呼び出し先の関心で設計する**: データの有無（未ログイン・ローディング中等）は呼び出し元の関心事。コンポーネント側では optional にせず必須 props として受け取り、呼び出し元でデフォルト値や表示制御を行う。
+
 ## Playwright
 
 ブラウザ操作には Playwright MCP ではなく `playwright-cli` コマンド（CLI版）を使うこと。Bash ツール経由で `playwright-cli <command>` を実行する。
