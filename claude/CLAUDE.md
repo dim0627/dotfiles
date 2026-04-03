@@ -18,3 +18,7 @@
 ## Playwright
 
 ブラウザ操作には Playwright MCP ではなく `playwright-cli` コマンド（CLI版）を使うこと。Bash ツール経由で `playwright-cli <command>` を実行する。
+
+## Notion MCP
+
+- ページ作成時には必ず絵文字アイコンを設定すること。ページの内容に合った絵文字を選んで `icon` パラメータに指定する。
