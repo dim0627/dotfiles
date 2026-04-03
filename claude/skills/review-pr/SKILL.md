@@ -29,12 +29,12 @@ allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(gh repo view*), Bash
 
 2. **コードレビューコメント**:
    ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate --jq '.[] | {id: .id, author: .user.login, body: .body, path: .path, line: .line, side: .side, createdAt: .created_at, in_reply_to_id: .in_reply_to_id}'
+   gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate --jq '.[] | {id: .id, author: .user.login, body: .body, path: .path, line: .line, createdAt: .created_at, in_reply_to_id: .in_reply_to_id}'
    ```
 
 3. **レビューサマリ**:
    ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '.[] | {id: .id, author: .user.login, state: .state, body: .body, submittedAt: .submitted_at}'
+   gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '[.[] | select(.body != "" or .state != "COMMENTED")] | .[] | {author: .user.login, state: .state, body: .body, submittedAt: .submitted_at}'
    ```
 
 ### 4. コメントの分類
