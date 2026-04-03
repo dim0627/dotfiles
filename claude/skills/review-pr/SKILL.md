@@ -24,17 +24,17 @@ allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(gh repo view*), Bash
 
 1. **PR全体コメント**:
    ```bash
-   gh pr view {number} --json comments --jq '[.comments[] | select(.author.is_bot != true)] | .[] | {author: .author.login, body: .body, createdAt: .createdAt}'
+   gh pr view {number} --json comments --jq '.comments[] | {author: .author.login, body: .body, createdAt: .createdAt}'
    ```
 
 2. **コードレビューコメント**:
    ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate --jq '[.[] | select(.user.type != "Bot")] | .[] | {id: .id, author: .user.login, body: .body, path: .path, line: .line, createdAt: .created_at, in_reply_to_id: .in_reply_to_id}'
+   gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate --jq '.[] | {id: .id, author: .user.login, body: .body, path: .path, line: .line, createdAt: .created_at, in_reply_to_id: .in_reply_to_id}'
    ```
 
 3. **レビューサマリ**:
    ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '[.[] | select(.user.type != "Bot") | select(.body != "" or .state != "COMMENTED")] | .[] | {author: .user.login, state: .state, body: .body, submittedAt: .submitted_at}'
+   gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '[.[] | select(.body != "" or .state != "COMMENTED")] | .[] | {author: .user.login, state: .state, body: .body, submittedAt: .submitted_at}'
    ```
 
 ### 4. コメントの分類
