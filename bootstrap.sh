@@ -17,6 +17,7 @@ ln -s $SCRIPT_DIR/bin $HOME/bin
 mkdir -p $HOME/.claude
 ln -sf $SCRIPT_DIR/claude/CLAUDE.md $HOME/.claude/CLAUDE.md
 ln -sf $SCRIPT_DIR/claude/settings.json $HOME/.claude/settings.json
+ln -sf $SCRIPT_DIR/claude/statusline-command.sh $HOME/.claude/statusline-command.sh
 for skill_dir in $SCRIPT_DIR/claude/skills/*/; do
   skill_name=$(basename "$skill_dir")
   ln -snf "$skill_dir" "$HOME/.claude/skills/$skill_name"
