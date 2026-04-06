@@ -9,6 +9,11 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(git symbolic-ref:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git pull:*)",
+      "Bash(git branch:*)",
       "Bash(git stash:*)",
       "Bash(git rm:*)",
       "Bash(git mv:*)",
@@ -24,11 +29,19 @@
       "Bash(pnpm build:*)",
       "Bash(pnpm lint:*)",
       "Bash(pnpm test:*)",
+      "Bash(pnpm test)",
       "Bash(pnpm typecheck:*)",
+      "Bash(pnpm biome:*)",
+      "Bash(pnpm vitest:*)",
       "Bash(npx tsc:*)",
       "Bash(npm view:*)",
       "Bash(node:*)",
       "Bash(nodenv versions:*)",
+      "Bash(just:*)",
+      "Bash(just)",
+      "Bash(mkdir:*)",
+      "Bash(pwd:*)",
+      "Bash(pwd)",
       "Bash(ls:*)",
       "Bash(head:*)",
       "Bash(tail:*)",
@@ -68,7 +81,8 @@
   "enabledPlugins": {
     "feature-dev@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
-    "playwright@claude-plugins-official": false
+    "playwright@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": true
   },
   "skipAutoPermissionPrompt": true
 }
