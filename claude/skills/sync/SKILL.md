@@ -2,7 +2,7 @@
 name: sync
 description: デフォルトブランチに切り替えて最新を pull する
 user-invocable: true
-allowed-tools: Bash(git fetch*), Bash(git symbolic-ref*), Bash(git checkout*), Bash(git pull*)
+allowed-tools: Bash(git fetch*), Bash(git symbolic-ref*|*), Bash(git checkout*), Bash(git pull*)
 ---
 
 デフォルトブランチに同期する:
