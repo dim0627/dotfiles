@@ -19,6 +19,13 @@
 
 ブラウザ操作には Playwright MCP ではなく `playwright-cli` コマンド（CLI版）を使うこと。Bash ツール経由で `playwright-cli <command>` を実行する。
 
+## Pull Request 作成
+
+- PRを作成するときは、リポジトリに `.github/PULL_REQUEST_TEMPLATE.md`（または `.github/pull_request_template.md`、`docs/pull_request_template.md` 等のテンプレート）が存在するか必ず確認すること。
+- テンプレートが存在する場合は、その構造・見出し・チェックリストを完全に踏襲してPR本文を作成する。独自のフォーマット（"## Summary" / "## Test plan" 等）で上書きしない。
+- このルールはスキル（`/create-pr` 等）経由でも、ユーザーからの直接指示でも同様に適用する。スキルが独自テンプレートを持っていても、リポジトリのテンプレートが優先。
+- テンプレートが存在しない場合のみ、デフォルトのフォーマットを使ってよい。
+
 ## Notion MCP
 
 - ページ作成時には必ず絵文字アイコンを設定すること。ページの内容に合った絵文字を選んで `icon` パラメータに指定する。
