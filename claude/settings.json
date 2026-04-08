@@ -102,6 +102,5 @@
         "repo": "VoltAgent/awesome-claude-code-subagents"
       }
     }
-  },
-  "skipAutoPermissionPrompt": true
+  }
 }
