@@ -2,7 +2,7 @@
 name: sync
 description: デフォルトブランチに切り替えて最新を pull する
 user-invocable: true
-allowed-tools: Bash(git fetch*), Bash(git symbolic-ref*|*), Bash(git checkout*), Bash(git pull*)
+allowed-tools: Bash(git fetch*), Bash(git symbolic-ref*), Bash(git checkout*), Bash(git pull*)
 ---
 
 デフォルトブランチに同期する:
@@ -12,7 +12,7 @@ allowed-tools: Bash(git fetch*), Bash(git symbolic-ref*|*), Bash(git checkout*),
 以下の2つを **並行して** 実行する:
 
 1. `git fetch` でリモートの最新情報を取得
-2. `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` でデフォルトブランチ名を取得
+2. `git symbolic-ref refs/remotes/origin/HEAD` でデフォルトブランチの参照を取得（出力例: `refs/remotes/origin/main` → ブランチ名は `main`）
 
 ### 2. チェックアウト & プル（順次実行）
 
