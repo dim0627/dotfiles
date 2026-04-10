@@ -15,7 +15,7 @@ allowed-tools: Bash(git status*), Bash(git diff*), Bash(git log*), Bash(git push
 
 1. `git status` で未コミットの変更がないか確認
 2. `git rev-parse --abbrev-ref HEAD` で現在のブランチ名を取得
-3. `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` でデフォルトブランチ名を取得
+3. `git symbolic-ref refs/remotes/origin/HEAD` でデフォルトブランチの参照を取得（出力例: `refs/remotes/origin/main` → ブランチ名は `main`）
 
 ### 2. 未コミットの変更がある場合
 
