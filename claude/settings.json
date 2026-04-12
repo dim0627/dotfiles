@@ -93,13 +93,20 @@
     "playwright@claude-plugins-official": false,
     "typescript-lsp@claude-plugins-official": true,
     "voltagent-qa-sec@voltagent-subagents": true,
-    "voltagent-biz@voltagent-subagents": true
+    "voltagent-biz@voltagent-subagents": true,
+    "genshijin@genshijin": true
   },
   "extraKnownMarketplaces": {
     "voltagent-subagents": {
       "source": {
         "source": "github",
         "repo": "VoltAgent/awesome-claude-code-subagents"
+      }
+    },
+    "genshijin": {
+      "source": {
+        "source": "github",
+        "repo": "InterfaceX-co-jp/genshijin"
       }
     }
   }
