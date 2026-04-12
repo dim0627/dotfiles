@@ -2,7 +2,7 @@
 name: create-pr
 description: 現在のブランチからプルリクエストを作成する
 user-invocable: true
-allowed-tools: Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*)
+allowed-tools: Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Bash(git log *), Bash(git diff *)
 ---
 
 現在のブランチの変更内容を分析し、PRを作成する。
@@ -18,12 +18,6 @@ allowed-tools: Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*)
 - **デフォルトブランチ**:
 !`git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'`
 
-- **含まれるコミット一覧**:
-!`git log $(git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')..HEAD --oneline`
-
-- **差分全体**:
-!`git diff $(git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')...HEAD`
-
 ## 手順
 
 ### 1. 未コミットの変更がある場合
@@ -36,7 +30,9 @@ allowed-tools: Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*)
 
 ### 3. 変更内容の分析
 
-上記の「含まれるコミット一覧」と「差分全体」から変更の目的と影響範囲を把握する。
+上記「デフォルトブランチ」の値を使い、以下のコマンドでコミット一覧と差分を取得して変更の目的と影響範囲を把握する:
+- `git log <デフォルトブランチ>..HEAD --oneline`
+- `git diff <デフォルトブランチ>...HEAD`
 
 ### 4. リモートにプッシュ
 
