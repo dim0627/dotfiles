@@ -2,33 +2,39 @@
 name: commit
 description: 変更をステージングしてコミットする
 user-invocable: true
-allowed-tools: Bash(git status*), Bash(git diff*), Bash(git log*), Bash(git add *), Bash(git commit *)
+allowed-tools: Bash(git add *), Bash(git commit *), Bash(git status*)
 ---
 
 変更内容を確認し、適切なコミットメッセージでコミットする。
 
+## 現在の状態
+
+- **変更ファイル一覧**:
+!`git status`
+
+- **未ステージの差分**:
+!`git diff`
+
+- **ステージ済みの差分**:
+!`git diff --staged`
+
+- **直近のコミット履歴**:
+!`git log --oneline -10`
+
 ## 手順
 
-### 1. 現在の状態を把握（並行実行）
-
-以下の3つを **並行して** 実行する:
-
-1. `git status` で変更ファイル一覧を取得
-2. `git diff` と `git diff --staged` で差分を確認
-3. `git log --oneline -10` で直近のコミットメッセージのスタイルを確認
-
-### 2. 変更がない場合
+### 1. 変更がない場合
 
 変更がなければその旨を報告して終了。
 
-### 3. コミットメッセージの作成
+### 2. コミットメッセージの作成
 
-- 変更内容を分析し、簡潔なコミットメッセージを作成する
+- 上記の差分を分析し、簡潔なコミットメッセージを作成する
 - リポジトリの既存コミットメッセージのスタイルに合わせる
 - 「何を変えたか」ではなく「なぜ変えたか」にフォーカスする
 - `.env` やクレデンシャル系ファイルが含まれていたら警告して除外する
 
-### 4. ステージングとコミット
+### 3. ステージングとコミット
 
 1. 関連ファイルを `git add` でステージング（`git add -A` は使わず、ファイル名を明示する）
 2. コミットメッセージは HEREDOC 形式で渡す:
@@ -42,6 +48,6 @@ allowed-tools: Bash(git status*), Bash(git diff*), Bash(git log*), Bash(git add 
    ```
 3. `git status` で結果を確認
 
-### 5. 結果報告
+### 4. 結果報告
 
 コミット結果を簡潔に報告する。

@@ -2,25 +2,28 @@
 name: review-pr
 description: 現在のブランチのPRレビューコメントを取得・分類し、対応計画を立てる
 user-invocable: true
-allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(gh repo view*), Bash(git log*), Read, Grep, Glob, Agent
+allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(git log*), Read, Grep, Glob, Agent
 ---
 
 現在のブランチに紐づくPRのレビューコメントを精査し、対応計画を立てる。
 
+## PR情報
+
+- **PR詳細**:
+!`gh pr view --json number,title,url,state,author,baseRefName,headRefName`
+
+- **リポジトリ**:
+!`gh repo view --json owner,name --jq '.owner.login + "/" + .name'`
+
 ## 手順
 
-### 1. PR情報の取得
+### 1. PR情報の確認
 
-1. `gh pr view --json number,title,url,state,author,baseRefName,headRefName` で現在のブランチに紐づくPRを取得
-2. PRが見つからない場合はその旨を報告して終了
+上記の「PR詳細」を確認する。PRが見つからない場合（エラー出力の場合）はその旨を報告して終了。
 
-### 2. リポジトリ情報の取得
+### 2. レビューコメントの全量取得
 
-1. `gh repo view --json owner,name --jq '.owner.login + "/" + .name'` でowner/repo形式を取得
-
-### 3. レビューコメントの全量取得
-
-#### 3.1 コードレビューコメントを2段階で取得
+#### 2.1 コードレビューコメントを2段階で取得
 
 CodeRabbit などの bot は本文が非常に長いため、全件 `body` を一度に取得すると出力が巨大化して打ち切られ、後半のコメントを見落とす危険がある。**必ず以下の2段階で取得すること**:
 
@@ -36,7 +39,7 @@ gh api repos/{owner}/{repo}/pulls/comments/{id} --jq '{path: .path, line: .line,
 
 複数件ある場合は for ループで一括取得して構わない。第1段階の件数と第2段階で取得した件数が一致していることを必ず確認する。
 
-#### 3.2 PR全体コメント・レビューサマリも並行取得
+#### 2.2 PR全体コメント・レビューサマリも並行取得
 
 第1段階と同じタイミングで以下も並行取得する:
 
@@ -50,7 +53,7 @@ gh api repos/{owner}/{repo}/pulls/comments/{id} --jq '{path: .path, line: .line,
   gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '[.[] | select(.body != "" or .state != "COMMENTED")] | .[] | {author: .user.login, state: .state, body: .body, submittedAt: .submitted_at}'
   ```
 
-### 4. コメントの分類
+### 3. コメントの分類
 
 以下の接頭辞で優先度分類する。接頭辞がないコメントは内容から判断する。
 プロジェクトに AGENTS.md がある場合はそちらのレビュー規約も参照すること。
@@ -63,7 +66,7 @@ gh api repos/{owner}/{repo}/pulls/comments/{id} --jq '{path: .path, line: .line,
 | `[nits]` | 🔵 低 | 些細な指摘 | 余裕があれば対応 |
 | `[fyi]` | ⚪ 情報 | 参考情報 | 対応不要（認識のみ） |
 
-### 5. 対応済みの判別
+### 4. 対応済みの判別
 
 - PR作者自身のコメント（返信・説明）は指摘から除外
 - `in_reply_to_id` があるコメントはスレッドとしてグループ化
@@ -74,13 +77,13 @@ gh api repos/{owner}/{repo}/pulls/comments/{id} --jq '{path: .path, line: .line,
   - 迷ったら `path` フィールドを持つインラインコメントは対象に含める方針で判断する
 - **コメント本文を grep などで filter しない**。CodeRabbit 等の冗長な bot コメントは出力が巨大になりがちだが、`grep -v` で除外すると見落としが発生する。代わりに `--jq` で `body` フィールドを切り詰める（例: `.body[:500]`）か、まず `id` と `path` だけ取得して全件 ID を把握してから個別に取得する
 
-### 6. 関連ファイルの確認
+### 5. 関連ファイルの確認
 
 対応が必要なコードレビューコメントに紐づくファイルパスがある場合:
 1. Read でファイルの該当箇所を確認
 2. コメントの文脈を理解した上で具体的な修正方針を提案
 
-### 7. 対応計画の出力
+### 6. 対応計画の出力
 
 以下の形式でまとめて報告する:
 
