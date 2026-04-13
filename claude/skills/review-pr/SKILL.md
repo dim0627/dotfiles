@@ -1,25 +1,30 @@
 ---
 name: review-pr
-description: 現在のブランチのPRレビューコメントを取得・分類し、対応計画を立てる
+description: PRのレビューコメントを取得・分類し、対応計画を立てる
 user-invocable: true
-allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(git log*), Read, Grep, Glob, Agent
+allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(git log*), Bash(gh repo view*), Read, Grep, Glob, Agent
 ---
 
-現在のブランチに紐づくPRのレビューコメントを精査し、対応計画を立てる。
-
-## PR情報
-
-- **PR詳細**:
-!`gh pr view --json number,title,url,state,author,baseRefName,headRefName`
-
-- **リポジトリ**:
-!`gh repo view --json owner,name --jq '.owner.login + "/" + .name'`
+PRのレビューコメントを精査し、対応計画を立てる。
 
 ## 手順
 
 ### 1. PR情報の確認
 
-上記の「PR詳細」を確認する。PRが見つからない場合（エラー出力の場合）はその旨を報告して終了。
+引数の有無に応じてPR情報を取得する:
+
+- **引数あり（PR URL or 番号）**: 引数をそのまま `gh pr view` に渡す
+  ```bash
+  gh pr view <引数> --json number,title,url,state,author,baseRefName,headRefName
+  ```
+- **引数なし**: 現在のブランチのPRを取得する
+  ```bash
+  gh pr view --json number,title,url,state,author,baseRefName,headRefName
+  ```
+
+PRが見つからない場合はその旨を報告して終了。
+
+次に、取得したPRの URL からリポジトリの owner/name を特定する（`--repo` フラグや URL パースで対応）。
 
 ### 2. レビューコメントの全量取得
 
