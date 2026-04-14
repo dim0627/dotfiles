@@ -15,8 +15,8 @@ allowed-tools: Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Ba
 - **現在のブランチ**:
 !`git rev-parse --abbrev-ref HEAD`
 
-- **デフォルトブランチ**:
-!`git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'`
+- **デフォルトブランチ参照**:
+!`git symbolic-ref refs/remotes/origin/HEAD`
 
 ## 手順
 
@@ -30,7 +30,7 @@ allowed-tools: Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Ba
 
 ### 3. 変更内容の分析
 
-上記「デフォルトブランチ」の値を使い、以下のコマンドでコミット一覧と差分を取得して変更の目的と影響範囲を把握する:
+上記「デフォルトブランチ参照」からブランチ名を特定し（例: `refs/remotes/origin/main` → `main`）、以下のコマンドでコミット一覧と差分を取得して変更の目的と影響範囲を把握する:
 - `git log <デフォルトブランチ>..HEAD --oneline`
 - `git diff <デフォルトブランチ>...HEAD`
 
