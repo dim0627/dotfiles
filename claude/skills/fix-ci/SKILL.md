@@ -7,19 +7,18 @@ allowed-tools: Bash(gh run*), Bash(gh pr*), Bash(git add *), Bash(git commit *),
 
 CIの失敗を診断して修正する。
 
-## 現在の状態
-
-- **現在のブランチ**:
-!`git rev-parse --abbrev-ref HEAD`
-
-- **直近のCI実行状態**:
-!`gh run list --branch $(git rev-parse --abbrev-ref HEAD) --limit 5 --json databaseId,status,conclusion,name,createdAt --jq '.[] | "\(.databaseId) \(.name) \(.status) \(.conclusion) \(.createdAt)"'`
-
 ## 手順
 
 ### 1. CI状態の確認
 
-上記の実行状態を確認し、失敗している run を特定する。
+まずブランチを特定し、CI実行状態を取得する:
+
+```bash
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+gh run list --branch "$BRANCH" --limit 5 --json databaseId,status,conclusion,name,createdAt --jq '.[] | "\(.databaseId) \(.name) \(.status) \(.conclusion) \(.createdAt)"'
+```
+
+引数でブランチ名が指定されている場合はそちらを優先する。
 
 - 全て成功している場合はその旨を報告して終了
 - 失敗している run が複数ある場合は、最新のものから対応する
