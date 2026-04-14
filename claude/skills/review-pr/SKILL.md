@@ -2,7 +2,7 @@
 name: review-pr
 description: PRのレビューコメントを取得・分類し、対応計画を立てる
 user-invocable: true
-allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(git log*), Bash(gh repo view*), Read, Grep, Glob, Agent
+allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(git log*), Bash(gh repo view*), Bash(git add *), Bash(git commit *), Bash(git push*), Bash(git status*), Bash(git diff*), Read, Edit, Grep, Glob, Agent
 ---
 
 PRのレビューコメントを精査し、対応計画を立てる。
@@ -131,3 +131,17 @@ gh api repos/{owner}/{repo}/pulls/comments/{id} --jq '{path: .path, line: .line,
 1. ...
 2. ...
 ```
+
+### 7. 対応の実行
+
+計画を報告した後、ユーザーに対応を実行するか確認する。
+
+承認された場合、以下の順序で対応する:
+
+1. **🔴 [must] から順に対応**: 優先度の高いものから修正を実施する
+2. **該当ファイルを Read で確認** → コメントの文脈を理解した上で修正
+3. **修正ごとに差分を報告**: 何を・なぜ変えたかを簡潔に説明する
+4. **[ask] への回答案を作成**: ユーザーが PR 上で返信できるよう回答のドラフトを提示する
+5. **[imo] は判断を添えて提案**: 同意する場合は修正を実施、しない場合は理由を説明しユーザーに判断を委ねる
+
+対応完了後、コミット・プッシュするかユーザーに確認する。
