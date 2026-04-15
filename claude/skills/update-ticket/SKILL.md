@@ -2,7 +2,7 @@
 name: update-ticket
 description: コードベースの現状をもとに、Notion/Linearのチケットを最新状態に更新する
 user-invocable: true
-allowed-tools: Bash(git log*), Bash(git diff*), Bash(git status*), Read, Grep, Glob, mcp__claude_ai_Notion__*, mcp__linear__*
+allowed-tools: Bash(gh pr list*), Bash(gh pr view*), Bash(gh api repos*), Read, Grep, Glob, mcp__claude_ai_Notion__*, mcp__linear__*
 ---
 
 コードベースの進捗をもとに、指定されたNotion/Linearのチケットを最新状態に同期する。
@@ -13,21 +13,13 @@ allowed-tools: Bash(git log*), Bash(git diff*), Bash(git status*), Read, Grep, G
   - Notion: `https://www.notion.so/...` または Notion ページID
   - Linear: `XXX-123` 形式のチケットID または URL
 
-## 現在の状態
-
-- **現在のブランチ**:
-!`git rev-parse --abbrev-ref HEAD`
-
-- **未コミットの変更**:
-!`git status --short`
-
 ## 手順
 
 ### 1. 対象チケットの判別と取得
 
 入力値から対象ツールを自動判別する:
 
-- `notion.so` を含む URL or 32桁hex → **Notion**
+- `notion.so` を含む URL or 32桁hex or ハイフン付きUUID → **Notion**
 - `XXX-123` 形式 or `linear.app` を含む URL → **Linear**
 - 判別不能 → ユーザーに確認
 
@@ -35,18 +27,27 @@ allowed-tools: Bash(git log*), Bash(git diff*), Bash(git status*), Read, Grep, G
 
 ### 2. コードベース現状の確認
 
-チケット内容に関連するコードの現状を把握する:
+チケット内容を起点に、関連するコードの現状を把握する。
+
+#### 2.1 チケットに紐づくPR・ブランチの確認
+
+チケットに GitHub PR のリンクやブランチ名が含まれている場合、PR から変更内容を把握する:
 
 ```bash
-git log --oneline -20
+gh pr view <番号> --json title,state,files,commits
 ```
 
 ```bash
-git diff --stat HEAD~10
+gh pr list --search "<チケットID>" --json number,title,state,headRefName
 ```
+
+PR が見つかれば、変更ファイル一覧から効率的に現状を把握できる。
+
+#### 2.2 関連ファイルの確認
 
 チケットに記載されたタスク・TODO・仕様に関連するファイルを Read/Grep で確認する。
 関連ファイルの特定はチケット内容から判断する（ファイル名、機能名、コンポーネント名等）。
+PR の変更ファイル一覧がある場合はそれも参照する。
 
 ### 3. 乖離の特定
 
@@ -63,7 +64,7 @@ git diff --stat HEAD~10
 
 #### 出力フォーマット
 
-```
+```markdown
 ## 🔄 チケット更新案
 
 **対象**: [チケットタイトル] (URL)
