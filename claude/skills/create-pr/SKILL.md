@@ -2,7 +2,7 @@
 name: create-pr
 description: 現在のブランチからプルリクエストを作成する
 user-invocable: true
-allowed-tools: Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Bash(git log *), Bash(git diff *)
+allowed-tools: Bash(git status*), Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Bash(git log *), Bash(git diff *), Bash(git add *), Bash(git commit *), Bash(git merge-base *)
 ---
 
 現在のブランチの変更内容を分析し、PRを作成する。
@@ -20,25 +20,34 @@ allowed-tools: Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Ba
 
 ## 手順
 
-### 1. 未コミットの変更がある場合
+### 1. デフォルトブランチから分岐しているか確認
 
-未コミットの変更があれば警告し、先にコミットするよう促して終了。
+上記「デフォルトブランチ参照」からデフォルトブランチ名を特定する（例: `refs/remotes/origin/main` → `main`）。
+
+現在のブランチがデフォルトブランチから直接分岐しているか確認する:
+- `git merge-base --is-ancestor <デフォルトブランチ> HEAD` が成功すればOK
+- ユーザーから明示的に別ブランチからの分岐を指示されている場合はスキップ
+- デフォルトブランチ起点でない場合は警告し、続行するか確認して終了
 
 ### 2. デフォルトブランチ上にいる場合
 
 デフォルトブランチ上にいる場合は、適切なブランチ名を提案して `git checkout -b <ブランチ名>` で新しいブランチを作成する。
 
-### 3. 変更内容の分析
+### 3. 未コミットの変更がある場合
 
-上記「デフォルトブランチ参照」からブランチ名を特定し（例: `refs/remotes/origin/main` → `main`）、以下のコマンドでコミット一覧と差分を取得して変更の目的と影響範囲を把握する:
+未コミットの変更がある場合は、`/commit` スキルを呼び出してコミットを作成する。
+
+### 4. 変更内容の分析
+
+以下のコマンドでコミット一覧と差分を取得して変更の目的と影響範囲を把握する:
 - `git log <デフォルトブランチ>..HEAD --oneline`
 - `git diff <デフォルトブランチ>...HEAD`
 
-### 4. リモートにプッシュ
+### 5. リモートにプッシュ
 
 1. `git push -u origin <ブランチ名>` でリモートにプッシュ
 
-### 5. PR作成
+### 6. PR作成
 
 PRタイトルとサマリを作成し、`gh pr create` で作成する:
 
@@ -57,6 +66,6 @@ PRタイトルとサマリを作成し、`gh pr create` で作成する:
   )"
   ```
 
-### 6. 結果報告
+### 7. 結果報告
 
 作成したPRのURLを報告する。
