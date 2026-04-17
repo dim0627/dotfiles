@@ -94,7 +94,8 @@
     "typescript-lsp@claude-plugins-official": true,
     "voltagent-qa-sec@voltagent-subagents": true,
     "voltagent-biz@voltagent-subagents": true,
-    "genshijin@genshijin": true
+    "genshijin@genshijin": true,
+    "vercel@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "voltagent-subagents": {
