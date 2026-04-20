@@ -94,7 +94,6 @@
     "typescript-lsp@claude-plugins-official": true,
     "voltagent-qa-sec@voltagent-subagents": true,
     "voltagent-biz@voltagent-subagents": true,
-    "genshijin@genshijin": true,
     "vercel@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
@@ -102,12 +101,6 @@
       "source": {
         "source": "github",
         "repo": "VoltAgent/awesome-claude-code-subagents"
-      }
-    },
-    "genshijin": {
-      "source": {
-        "source": "github",
-        "repo": "InterfaceX-co-jp/genshijin"
       }
     }
   }
