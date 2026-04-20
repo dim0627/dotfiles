@@ -156,17 +156,7 @@ bindkey '^R' peco-history-selection
 # zsh
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-# Tab でオートサジェストを受け入れる（サジェストがなければ通常補完にフォールバック）
-_autosuggest_tab_accept() {
-    if (( $#POSTDISPLAY )); then
-        zle autosuggest-accept
-    else
-        zle expand-or-complete
-    fi
-}
-zle -N _autosuggest_tab_accept
-bindkey '^I' _autosuggest_tab_accept
-
+# Tab は zsh 標準補完、サジェスト受け入れは → / End（zsh-autosuggestions デフォルト）
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 export PATH="$HOME/.local/bin:$PATH"
 
