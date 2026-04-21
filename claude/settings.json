@@ -57,7 +57,7 @@
       "WebSearch"
     ],
     "deny": [],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "auto"
   },
   "hooks": {
     "PermissionRequest": [
@@ -103,5 +103,6 @@
         "repo": "VoltAgent/awesome-claude-code-subagents"
       }
     }
-  }
+  },
+  "skipAutoPermissionPrompt": true
 }
