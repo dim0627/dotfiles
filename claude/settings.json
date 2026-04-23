@@ -54,7 +54,13 @@
       "Bash(convert *)",
       "Bash(afplay *)",
       "Bash(cd *)",
-      "WebSearch"
+      "WebSearch",
+      "mcp__linear__get_issue",
+      "mcp__linear__list_comments",
+      "mcp__linear__list_issues",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "mcp__render__get_metrics",
+      "mcp__sentry__get_sentry_resource"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

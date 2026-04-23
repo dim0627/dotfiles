@@ -2,7 +2,7 @@
 name: commit
 description: 変更をステージングしてコミットする
 user-invocable: true
-allowed-tools: Bash(git add *), Bash(git commit *), Bash(git status*)
+allowed-tools: Bash(git add *), Bash(git commit *), Bash(git status *)
 ---
 
 変更内容を確認し、適切なコミットメッセージでコミットする。
@@ -35,6 +35,8 @@ allowed-tools: Bash(git add *), Bash(git commit *), Bash(git status*)
 - `.env` やクレデンシャル系ファイルが含まれていたら警告して除外する
 
 ### 3. ステージングとコミット
+
+**重要**: 以下の各コマンドは `&&` や `;` で連結せず、**それぞれ別々の Bash ツール呼び出しで実行する**。複合コマンドは allowed-tools のパターンにマッチせずパーミッションプロンプトが出るため。
 
 1. 関連ファイルを `git add` でステージング（`git add -A` は使わず、ファイル名を明示する）
 2. コミットメッセージは HEREDOC 形式で渡す:

@@ -2,7 +2,7 @@
 name: commit-and-push
 description: 変更をステージングしてコミットし、リモートにプッシュする
 user-invocable: true
-allowed-tools: Bash(git add *), Bash(git commit *), Bash(git push*), Bash(git status*)
+allowed-tools: Bash(git add *), Bash(git commit *), Bash(git push *), Bash(git status *)
 ---
 
 変更内容を確認し、コミットしてリモートにプッシュする。
@@ -39,6 +39,8 @@ allowed-tools: Bash(git add *), Bash(git commit *), Bash(git push*), Bash(git st
 
 ### 3. ステージングとコミット
 
+**重要**: 以下の各コマンドは `&&` や `;` で連結せず、**それぞれ別々の Bash ツール呼び出しで実行する**。複合コマンドは allowed-tools のパターンにマッチせずパーミッションプロンプトが出るため。
+
 1. 関連ファイルを `git add` でステージング（`git add -A` は使わず、ファイル名を明示する）
 2. コミットメッセージは HEREDOC 形式で渡す:
    ```bash
@@ -55,6 +57,7 @@ allowed-tools: Bash(git add *), Bash(git commit *), Bash(git push*), Bash(git st
 
 1. 上記「現在のブランチ」の値を使って `git push origin <ブランチ名>` でリモートにプッシュ
    - リモートブランチが存在しない場合は `git push -u origin <ブランチ名>` を使う
+   - ここも前段のコミットコマンドと `&&` で連結せず、**別の Bash ツール呼び出し**で実行する
 
 ### 5. 結果報告
 
