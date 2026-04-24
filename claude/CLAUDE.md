@@ -52,9 +52,12 @@
 - 実際のテストコード実装はユーザー承認後
 - 既存テストがある場合はまず既存の書き方・命名・構造に倣う
 
-## Playwright
+## ブラウザ操作
 
-ブラウザ操作は Playwright MCP ではなく `playwright-cli`（CLI 版）を Bash 経由で実行。
+- 原則 `agent-browser`（https://agent-browser.dev/ ）を Bash 経由で実行。AI エージェント向けに最適化された CLI で、ref ベースのスナップショット（`@e1` 等）によりトークン効率が高い
+- 使い方に迷ったら `agent-browser skills get core --full` で公式ガイドを参照
+- Playwright 資産の保守・E2E テスト実装など特別な事情がある場合のみ `playwright-cli` を使用可
+- Playwright MCP は使わない
 
 ## Pull Request 作成
 
