@@ -63,7 +63,7 @@
       "mcp__sentry__get_sentry_resource"
     ],
     "deny": [],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "auto"
   },
   "hooks": {
     "PermissionRequest": [
@@ -110,5 +110,6 @@
       }
     }
   },
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true
 }
