@@ -2,7 +2,7 @@
 name: ralph-ready
 description: Notion/LinearのIssueがラルフループ（自律的コーディングエージェントを長時間ループ実行させる手法）で安全に走らせられる状態か検証し、不足があればユーザーに一問ずつ質問してIssue本文を更新する。「ラルフ適格化」「ralph ready」「Issueを詰めて」などで起動。
 user-invocable: true
-allowed-tools: mcp__claude_ai_Notion__*, mcp__claude_ai_Linear__*, Read, Grep, Glob
+allowed-tools: mcp__claude_ai_Notion__*, mcp__linear__*, Read, Grep, Glob
 ---
 
 ラルフループで実行するIssueを「ラルフ適格」な状態にするためのスキル。
