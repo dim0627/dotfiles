@@ -2,7 +2,7 @@
 name: handoff
 description: セッションの作業内容を要約し、引き継ぎ用にまとめる
 user-invocable: true
-allowed-tools: Bash(git log*), Bash(git diff*), Bash(git status*)
+allowed-tools: Bash(git log*), Bash(git diff*), Bash(git status*), Bash(gh issue*), Bash(gh pr*), mcp__claude_ai_Linear__*, mcp__claude_ai_Notion__*
 ---
 
 現在のセッションで行った作業を要約し、次のセッションや外部ツールへの引き継ぎ用にまとめる。
@@ -37,7 +37,7 @@ git log --oneline --since="today" --all
 
 ### 3. 要約の出力
 
-以下のフォーマットで出力する。Linear/Notion にそのまま貼れる形式とする。
+以下のフォーマットで出力する。GitHub Issue / PR / Linear / Notion などのチケット管理ツールにそのまま貼れる、シンプルなMarkdown形式とする。
 該当内容がないセクションは省略する。
 
 ```
@@ -62,7 +62,10 @@ git log --oneline --since="today" --all
 
 ### 4. 出力形式の注意
 
-- 箇条書き・見出し・太字のみ使用（テーブル不可）
+- 箇条書き・見出し・太字を基本に。テーブルは Linear/Notion では崩れやすいため、貼付先が GitHub と確定している場合のみ使ってよい
 - フラットな構造を保つ（深いネスト不可）
 - 簡潔に。冗長な説明は省く
-- ユーザーが Linear/Notion に貼る旨を言った場合、該当ツールの MCP で直接書き込むか確認する
+- ユーザーが特定の貼付先を指定した場合（GitHub Issue/PR コメント・Linear チケット・Notion ページ等）、該当ツールに直接書き込むか確認する
+  - GitHub: `gh issue comment <番号>` / `gh pr comment <番号>` / `gh issue edit <番号>`
+  - Linear: `mcp__claude_ai_Linear__save_comment` / `mcp__claude_ai_Linear__save_issue`
+  - Notion: `mcp__claude_ai_Notion__notion-update-page`

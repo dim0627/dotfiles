@@ -1,29 +1,31 @@
 ---
 name: update-ticket
-description: コードベースの現状をもとに、Notion/Linearのチケットを最新状態に更新する
+description: コードベースの現状をもとに、GitHub Issue / Linear / Notion のチケットを最新状態に更新する
 user-invocable: true
-allowed-tools: Bash(gh pr list*), Bash(gh pr view*), Bash(gh api repos*), Read, Grep, Glob, mcp__claude_ai_Notion__*, mcp__linear__*
+allowed-tools: Bash(gh pr list*), Bash(gh pr view*), Bash(gh issue view*), Bash(gh issue edit*), Bash(gh api repos*), Read, Grep, Glob, mcp__claude_ai_Notion__*, mcp__claude_ai_Linear__*
 ---
 
-コードベースの進捗をもとに、指定されたNotion/Linearのチケットを最新状態に同期する。
+コードベースの進捗をもとに、指定された GitHub Issue / Linear / Notion のチケットを最新状態に同期する。
 
 ## 引数
 
 - **URL or チケット番号**（必須）: 更新対象のチケット
-  - Notion: `https://www.notion.so/...` または Notion ページID
-  - Linear: `XXX-123` 形式のチケットID または URL
+  - GitHub: `https://github.com/owner/repo/issues/123` / `owner/repo#123` / `#123` / `123`
+  - Linear: `XXX-123` 形式のチケットID / `linear.app` URL
+  - Notion: `https://www.notion.so/...` / 32桁hex / ハイフン付きUUID
 
 ## 手順
 
 ### 1. 対象チケットの判別と取得
 
-入力値から対象ツールを自動判別する:
+入力値からバックエンドを自動判別し、本文・コメントを取得する。
 
-- `notion.so` を含む URL or 32桁hex or ハイフン付きUUID → **Notion**
-- `XXX-123` 形式 or `linear.app` を含む URL → **Linear**
-- 判別不能 → ユーザーに確認
-
-対象ツールの MCP でチケット内容を取得する。
+| バックエンド | 判別パターン | 取得コマンド |
+| --- | --- | --- |
+| GitHub | `github.com` URL / `owner/repo#N` / `#N` / 数字のみ | `gh issue view <参照> --json number,title,body,labels,state,url` + `gh issue view <参照> --comments` |
+| Linear | `XXX-123` 形式 / `linear.app` URL | `mcp__claude_ai_Linear__get_issue` + `mcp__claude_ai_Linear__list_comments` |
+| Notion | `notion.so` URL / 32桁hex / ハイフン付きUUID | `mcp__claude_ai_Notion__notion-fetch` |
+| 判別不能 | — | ユーザーに確認 |
 
 ### 2. コードベース現状の確認
 
@@ -38,7 +40,13 @@ gh pr view <番号> --json title,state,files,commits
 ```
 
 ```bash
-gh pr list --search "<チケットID>" --json number,title,state,headRefName
+gh pr list --search "<チケットID or キーワード>" --json number,title,state,headRefName
+```
+
+GitHub Issueがバックエンドの場合は、Issue本文や `closingIssuesReferences` から関連PRを辿るのが簡単:
+
+```bash
+gh issue view <番号> --json closedByPullRequestsReferences,title,body
 ```
 
 PR が見つかれば、変更ファイル一覧から効率的に現状を把握できる。
@@ -88,11 +96,19 @@ PR の変更ファイル一覧がある場合はそれも参照する。
 
 ### 5. ユーザー承認後の反映
 
-ユーザーが承認したら、対象ツールの MCP でチケットを更新する。
+ユーザーが承認したら、バックエンドごとの書き戻しコマンドでチケットを更新する。
+
+| バックエンド | 書き戻しコマンド | 補足 |
+| --- | --- | --- |
+| GitHub | `gh issue edit <番号 or URL> --body-file <一時ファイル>` | 他リポジトリは URL 直指定か `--repo owner/repo` を併用。改行・コードブロックを含むため `--body` 直渡しは避け、一時ファイル経由が安全 |
+| Linear | `mcp__claude_ai_Linear__save_issue` | チケットIDを指定して `description` を更新 |
+| Notion | `mcp__claude_ai_Notion__notion-update-page` | ページIDを指定して本文を更新 |
 
 更新時の注意:
 - 既存の構造・フォーマットを維持する
-- 箇条書き・見出し・太字のみ使用（テーブル不可）
+- バックエンドごとのレンダリング差:
+  - GitHub: GitHub Flavored Markdown。テーブルも安定して使える
+  - Linear / Notion: テーブル記法はレンダリング互換性が低いため、箇条書き・見出し・太字を優先する
 - フラットな構造を保つ
 - 変更箇所のみ更新し、関係ない部分は触らない
 
@@ -100,4 +116,4 @@ PR の変更ファイル一覧がある場合はそれも参照する。
 
 - 更新は必ずユーザー承認後に実行する。勝手に書き込まない
 - チケットの既存フォーマット・構造を壊さない
-- ステータス変更（Open→Closed等）はユーザーに確認してから行う
+- ステータス変更（Open→Closed/Done等）はユーザーに確認してから行う
