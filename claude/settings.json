@@ -23,6 +23,8 @@
       "Bash(git rm *)",
       "Bash(git mv *)",
       "Bash(gh pr *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
       "Bash(gh run *)",
       "Bash(gh api *)",
       "Bash(gh repo *)",
@@ -58,6 +60,9 @@
       "mcp__linear__get_issue",
       "mcp__linear__list_comments",
       "mcp__linear__list_issues",
+      "mcp__claude_ai_Linear__get_issue",
+      "mcp__claude_ai_Linear__list_comments",
+      "mcp__claude_ai_Linear__list_issues",
       "mcp__claude_ai_Notion__notion-fetch",
       "mcp__render__get_metrics",
       "mcp__sentry__get_sentry_resource"

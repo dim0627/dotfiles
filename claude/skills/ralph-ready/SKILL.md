@@ -1,11 +1,11 @@
 ---
 name: ralph-ready
-description: Notion/LinearのIssueがラルフループ（自律的コーディングエージェントを長時間ループ実行させる手法）で安全に走らせられる状態か検証し、不足があればユーザーに一問ずつ質問してIssue本文を更新する。「ラルフ適格化」「ralph ready」「Issueを詰めて」などで起動。
+description: GitHub Issue / Linear / Notion のチケットがラルフループ（自律的コーディングエージェントを長時間ループ実行させる手法）で安全に走らせられる状態か検証し、不足があればユーザーに一問ずつ質問してチケット本文を更新する。「ラルフ適格化」「ralph ready」「Issueを詰めて」などで起動。
 user-invocable: true
-allowed-tools: mcp__claude_ai_Notion__*, mcp__linear__*, Read, Grep, Glob
+allowed-tools: Bash, Read, Grep, Glob, mcp__claude_ai_Notion__*, mcp__claude_ai_Linear__*
 ---
 
-ラルフループで実行するIssueを「ラルフ適格」な状態にするためのスキル。
+ラルフループで実行するチケット（GitHub Issue / Linear / Notion）を「ラルフ適格」な状態にするためのスキル。
 
 ## ラルフ適格の定義
 
@@ -18,20 +18,24 @@ allowed-tools: mcp__claude_ai_Notion__*, mcp__linear__*, Read, Grep, Glob
 ## 引数
 
 - **URL or チケットID**（必須）: 検証対象のチケット
-  - Notion: `notion.so` を含む URL または ページID
-  - Linear: `XXX-123` 形式 または `linear.app` を含む URL
+  - GitHub: `https://github.com/owner/repo/issues/123` / `owner/repo#123` / `#123` / `123`
+  - Linear: `XXX-123` 形式 / `https://linear.app/...`
+  - Notion: `https://www.notion.so/...` / 32桁hex / ハイフン付きUUID
 
 ## 手順
 
 ### 1. チケット取得
 
-入力から対象ツールを自動判別し、MCPでチケット本文を取得する。
+入力からバックエンドを自動判別し、本文・コメントを取得する。
 
-- `notion.so` を含む URL or ハイフン付きUUID or 32桁hex → **Notion** (`notion-fetch`)
-- `XXX-123` 形式 or `linear.app` URL → **Linear** (`get_issue`)
-- 判別不能 → ユーザーに確認
+| バックエンド | 判別パターン | 取得コマンド |
+| --- | --- | --- |
+| GitHub | `github.com` URL / `owner/repo#N` / `#N` / 数字のみ | `gh issue view <参照> --json number,title,body,labels,state,url` + `gh issue view <参照> --comments` |
+| Linear | `XXX-123` 形式 / `linear.app` URL | `mcp__claude_ai_Linear__get_issue` + `mcp__claude_ai_Linear__list_comments` |
+| Notion | `notion.so` URL / 32桁hex / ハイフン付きUUID | `mcp__claude_ai_Notion__notion-fetch` |
+| 判別不能 | — | ユーザーに確認 |
 
-取得した本文は以降の判定の入力となるので、コメントや関連リンク等も併せて確認する。
+取得した本文・コメントは以降の判定の入力となる。関連リンク（PR・他チケットへの参照）が含まれていれば併せて確認する。
 
 ### 2. コードベース探索（質問を減らすため）
 
@@ -58,7 +62,7 @@ allowed-tools: mcp__claude_ai_Notion__*, mcp__linear__*, Read, Grep, Glob
 - **エッジケース**: 想定外データ・エラー・空状態などの扱い
 - **既存パターン踏襲 vs 新規設計**: コードベースに似た先例があり、それに倣うべきか
 
-質問が一つも出なければ → **ラルフ適格** と判定し、本文更新はスキップしてステップ7（タイトルマーカーの付与）に進む。
+質問が一つも出なければ → **ラルフ適格** と判定し、本文更新はスキップして終了する。ユーザーに「質問なし＝適格」と判定した旨を簡潔に報告する。
 
 ### 4. ユーザーへの質問（一問ずつ）
 
@@ -82,33 +86,23 @@ allowed-tools: mcp__claude_ai_Notion__*, mcp__linear__*, Read, Grep, Glob
 
 - 既存の構造・見出し・フォーマットを維持する
 - 新セクションを末尾に足すのではなく、既存セクションの該当箇所を修正・追記する
-- 箇条書き・見出し・太字のみ使用（テーブル不可）
-- フラットな構造を保つ
+- バックエンドごとのレンダリング差に注意:
+  - GitHub: GitHub Flavored Markdown。テーブル・コードブロックも安定して使える
+  - Linear / Notion: テーブル記法はレンダリング互換性が低い。箇条書き・見出し・太字を優先し、テーブルは表形式が本当に適切な場合のみ
+- フラットな構造を保つ（深いネスト・複雑レイアウトを避ける）
 - 既に記載されている内容と矛盾する箇所は、新しい情報に揃えて整合させる
 
 ### 6. ユーザー承認後の本文書き戻し
 
-更新案をユーザーに提示し、承認を得てから対象ツールのMCPでチケット本文を更新する。
+更新案をユーザーに提示し、承認を得てからバックエンドごとの書き戻しコマンドを実行する。
 
-- Notion: `notion-update-page`
-- Linear: `save_issue`
+| バックエンド | 書き戻しコマンド | 補足 |
+| --- | --- | --- |
+| GitHub | `gh issue edit <番号 or URL> --body-file <一時ファイル>` | 他リポジトリは URL 直指定か `--repo owner/repo` を併用。改行・コードブロックを含むため `--body` 直渡しは避け、一時ファイル経由が安全 |
+| Linear | `mcp__claude_ai_Linear__save_issue` | Linearのidまたはチケット参照を指定。Markdown本文を `description` で更新 |
+| Notion | `mcp__claude_ai_Notion__notion-update-page` | ページIDを指定して本文を更新 |
 
-ステータス変更（Open→In Progress等）は今回のスキルの対象外。本文更新のみ行う。
-
-### 7. タイトルマーカーの付与
-
-ラルフ適格判定に至ったチケットには、タイトル冒頭に `🧝 ` （elf絵文字＋半角スペース）を前置してマーキングする。これによりIssue一覧・通知・検索結果から「ラルフ適格化済み」をひと目で識別できる。
-
-具体ルール:
-
-- **絵文字**: `🧝` で固定。他の絵文字に置き換えない（一覧での識別性が落ちるため）。
-- **位置**: 必ず前置（接頭辞）。後置は使わない。
-- **冪等性**: 既にタイトルが `🧝 ` で始まっていれば追加しない。再実行で `🧝 🧝 ...` と重複しないよう先頭チェックする。
-- **対象**: ステップ3で「質問なし＝即適格」と判定したケース、ステップ6で本文更新まで完了したケース、どちらでもこのステップを実行する。
-- **承認**: タイトル変更は本文更新と同様、ユーザー承認後に実行する。本文更新と同じ承認タイミングでまとめて確認して構わない。
-- **書き込みAPI**: Notionは `notion-update-page` の `title`、Linearは `save_issue` の `title` でタイトルを更新する。
-
-非適格と判定された場合、もし既に `🧝 ` プレフィックスが付いているならユーザー承認のうえ削除する。マーカーが付いたまま中身が陳腐化している、というセルフケアの最低限。
+ステータス変更（Open→Closed/Done等）・ラベル付与は今回のスキルの対象外。本文更新のみ行う。
 
 ## 注意事項
 
