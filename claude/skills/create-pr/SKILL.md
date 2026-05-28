@@ -35,7 +35,7 @@ allowed-tools: Bash(git status*), Bash(git push*), Bash(git checkout -b *), Bash
 
 ### 3. 未コミットの変更がある場合
 
-未コミットの変更がある場合は、`/commit` スキルを呼び出してコミットを作成する。
+未コミットの変更がある場合は、差分を確認して適切なメッセージでコミットを作成する。コミットメッセージはリポジトリの既存スタイルに合わせ、HEREDOC 形式で `Co-Authored-By` を付与する。
 
 ### 4. 変更内容の分析
 
