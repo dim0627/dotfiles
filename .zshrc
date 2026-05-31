@@ -175,3 +175,6 @@ if [ -f '/Users/tsujidaisuke/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/ts
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/tsujidaisuke/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/tsujidaisuke/google-cloud-sdk/completion.zsh.inc'; fi
+
+# bun completions
+[ -s "/Users/tsujidaisuke/.bun/_bun" ] && source "/Users/tsujidaisuke/.bun/_bun"
