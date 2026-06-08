@@ -25,6 +25,7 @@
       "Bash(gh pr *)",
       "Bash(gh issue view *)",
       "Bash(gh issue list *)",
+      "Bash(gh issue comment *)",
       "Bash(gh run *)",
       "Bash(gh api *)",
       "Bash(gh repo *)",
