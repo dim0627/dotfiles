@@ -5,7 +5,7 @@ user-invocable: true
 allowed-tools: Bash(gh repo view*), Bash(gh pr list*), Bash(gh pr view*), Bash(gh pr merge*), Bash(gh pr comment*), Bash(gh api repos*), Bash(gh api user*), Read, Grep, AskUserQuestion
 ---
 
-現在のリポジトリで dependabot / renovate などのbotが出した依存更新PRを一括処理する。攻めめ路線（minor までは自動マージ、major と breaking 記載ありのみ判断）で、判定 → 一括承認 → 自動マージ → 残りはエスカレーション、の流れを 1 コマンドにまとめる。
+現在のリポジトリで dependabot / renovate などのbotが出した依存更新PRを一括処理する。攻めの路線（minor までは自動マージ、major と breaking 記載ありのみ判断）で、判定 → 一括承認 → 自動マージ → 残りはエスカレーション、の流れを 1 コマンドにまとめる。
 
 ## 前提
 
@@ -13,7 +13,7 @@ allowed-tools: Bash(gh repo view*), Bash(gh pr list*), Bash(gh pr view*), Bash(g
 - `gh` CLI が認証済み
 - 対象は botアカウント（`dependabot[bot]` / `renovate[bot]`）が author の Open PR のみ
 
-## 判定ロジック（攻めめ路線）
+## 判定ロジック（攻めの路線）
 
 | 条件 | 判定 |
 |------|------|
@@ -97,8 +97,8 @@ PR body 内に以下のいずれかが含まれているかチェック:
 
 - `mergeable` が `CONFLICTING` → 🔴 エスカレーション（コンフリクト）
 - `mergeable` が `UNKNOWN` → 🔴 エスカレーション（判定不能）
-- `statusCheckRollup` 内に `conclusion=FAILURE` のチェックあり → 🔴 エスカレーション（CI 失敗）
-- 全 `SUCCESS` または `PENDING` のみ → OK
+- `statusCheckRollup` の各チェックの `conclusion` が `SUCCESS` または `PENDING`（`status=IN_PROGRESS`/`QUEUED` 含む）の **いずれか以外**（`FAILURE` / `CANCELLED` / `TIMED_OUT` / `ACTION_REQUIRED` / `STARTUP_FAILURE` / `STALE` / `NEUTRAL` 等）が 1 つでもあれば → 🔴 エスカレーション（CI 異常）
+- 全チェックが `SUCCESS` または `PENDING` のみ → OK
 
 #### 3.5 最終判定
 
