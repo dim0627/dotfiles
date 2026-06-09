@@ -6,7 +6,7 @@ user-invocable: true
 
 # ai-cli 画像生成（Vercel AI Gateway）
 
-vercel-labs/ai-cli を使ってローカルから画像を量産する。`AI Gateway` 経由で gemini / imagen / gpt-image 等にアクセスする。**設計思想は「ai-cli はビジュアル背景層だけ生成し、文字（コピー）は Figma でベクター後乗せ」**（画像モデルは日本語が化けるため）。
+vercel-labs/ai-cli を使ってローカルから画像を量産する。`AI Gateway` 経由で gemini / imagen / gpt-image 等にアクセスする。**設計思想は「ai-cli はビジュアル背景層だけ生成し、文字（コピー）は `compose-ad-creative` スキルで HTML/CSS 後乗せ」**（画像モデルは日本語が化けるため）。
 
 ## 起動条件 / 前提
 
@@ -85,11 +85,11 @@ M=google/gemini-2.5-flash-image
 
 ゴール例: **サイト流入/お試し**。ブランド詳細・Round1 結果はメモリ `project_x_ad_creative_exploration.md` 参照。
 
-1. **コピーとビジュアルを分離**。ai-cli は文字なし背景だけ生成（テキスト用の余白 or 空の吹き出しを必ず確保）。文字は後で Figma でベクター乗せ
+1. **コピーとビジュアルを分離**。ai-cli は文字なし背景だけ生成（テキスト用の余白 or 空の吹き出しを必ず確保）。文字は後で `compose-ad-creative` スキルで乗せる（HTML/CSS のベクター品質、$0・Figma 不要）
 2. **量で殴る**: ビジュアル軸 5方向 × 各2案＝10枚を1コマンドで生成（軸例: 写真シズル / ブランドイラスト / 応援団長マスコット / ミニマルグラデ / ポップコミック）
 3. 全枚を Read で目視評価 → ユーザーが方向を選別
 4. 勝った1〜2軸を `gemini-3-pro-image` で本気生成（Round2）
-5. Figma でコピー乗せ → 既存コピー型をチャンピオンに残しつつビジュアル型を挑戦者として X で A/B
+5. `compose-ad-creative` でコピー乗せ → 既存コピー型をチャンピオンに残しつつビジュアル型を挑戦者として X で A/B
 6. 全軸に注入するブランドDNA: クリーム背景・角丸・アンバーオレンジ＋オリーブ・親しみやすい日本語アプリ調・`Absolutely no text, no letters, no words anywhere.`
 
 ### 作業ディレクトリ
@@ -109,4 +109,5 @@ M=google/gemini-2.5-flash-image
 ## 関連
 
 - メモリ: `project_x_ad_creative_exploration.md`（探索の全文脈・Round1結果）、`project_ui_tone.md`（トーン方針）
+- 後工程スキル: `compose-ad-creative`（背景＋コピー → カンプ PNG。文字乗せはこちら）
 - 既存スキル: `create-ad-shelf`（honn.me Twitter 広告 Shelf 作成。広告運用フローの姉妹）
