@@ -1,4 +1,9 @@
-// compose-ad-creative: 広告カンプ（静止画）の HTML をコンセプト定義から量産する。
+// compose-ad-creative: 広告カンプ（静止画）の HTML をコンセプト定義から生成する【参考実装】。
+//
+// これは「あらゆる広告に効く汎用エンジン」ではない。minimal/left レイアウト
+// （左に余白のある背景 ＋ 左上コピー ＋ 下部中央ロゴ）に特化した叩き台である。
+// 背景の構図が違う場合（中央寄せ・パネルが要る・写真の上に白文字 等）は、この
+// 実装を出発点に、ベール方向・配置・サイズを案件ごとに改変して使うことを想定している。
 //
 // 使い方:
 //   node compose.mjs <config.json> [outDir]
@@ -9,8 +14,7 @@
 //   - レンダー（HTML→PNG）はこのスクリプトに抱えず、SKILL.md の agent-browser 手順で行う
 //   - ブランド（色/書体/ロゴ/CTA）は config.brand に外部化＝プロダクト非依存
 //     （呼び出し側が対象プロダクトの docs/product.md から埋める）
-//
-// 前提レイアウトは 1200x1200（1:1）基準。配置数値はこの寸法に最適化されている。
+//   - レイアウト配置数値は 1200x1200（1:1）基準。改変の起点として読むこと。
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 
@@ -20,7 +24,13 @@ if (!configPath) {
   process.exit(1);
 }
 
-const config = JSON.parse(readFileSync(configPath, "utf8"));
+let config;
+try {
+  config = JSON.parse(readFileSync(configPath, "utf8"));
+} catch (err) {
+  console.error(`config の読み込みに失敗しました（${configPath}）: ${err.message}`);
+  process.exit(1);
+}
 const brand = config.brand ?? {};
 const viewport = config.viewport ?? { width: 1200, height: 1200 };
 const comps = config.comps ?? [];
@@ -32,8 +42,8 @@ for (const key of ["ink", "accent", "paper", "fontFamily", "fontCssUrl"]) {
     process.exit(1);
   }
 }
-if (comps.length === 0) {
-  console.error("config.comps が空です");
+if (!Array.isArray(comps) || comps.length === 0) {
+  console.error("config.comps が空、または配列ではありません");
   process.exit(1);
 }
 
@@ -41,8 +51,14 @@ const outDir = outDirArg
   ? resolve(outDirArg)
   : join(dirname(resolve(configPath)), "out");
 
+// HTML エスケープ。属性値（href/url("...")）にも値が流れるためクォートも変換する（多層防御）
 const esc = (s) =>
-  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 // 背景パスを file:// URL に正規化（HTML の置き場所と背景が離れても解決できるよう絶対化）
 const bgUrl = (bg) => {
@@ -58,11 +74,13 @@ const headlineHtml = (lines) =>
     )
     .join("\n      ");
 
-const subHtml = (sub) =>
-  esc(sub)
+const subHtml = (sub) => {
+  if (!sub) return ""; // 未設定なら "undefined" を描画せず空にする
+  return esc(sub)
     .split("\n")
     .map((line) => `<div>${line}</div>`)
     .join("");
+};
 
 // ロゴ: { pre, accent, post } を pre + <accent色>accent</> + post で組む（例: taberu . pro）
 const logoHtml = (logo) => {
@@ -136,6 +154,15 @@ function hexToRgba(hex, alpha) {
 
 mkdirSync(outDir, { recursive: true });
 for (const c of comps) {
+  // id はファイル名になる。パス区切り文字でディレクトリ外に書き出させない
+  if (!c.id || /[/\\]/.test(c.id)) {
+    console.error(`無効な comp.id: ${JSON.stringify(c.id)}（パス区切り文字は使えません）`);
+    process.exit(1);
+  }
+  if (!Array.isArray(c.headline) || c.headline.length === 0) {
+    console.error(`comp ${c.id}: headline（1 行以上の配列）が必要です`);
+    process.exit(1);
+  }
   const path = join(outDir, `${c.id}.html`);
   writeFileSync(path, renderHTML(c));
   console.log(`wrote ${c.id}.html  [${c.axis ?? ""}]`);
