@@ -1,18 +1,29 @@
 ---
 name: ai-image-gen
-description: vercel-labs/ai-cli（Vercel AI Gateway 経由）でローカルから画像を生成する。秘匿キーは 1Password（op run でランタイム注入）、nodenv バージョン罠・Touch ID 連打回避・モデル選定・コスト管理の手順込み。taberu.pro / honn.me 等の X(Twitter)広告クリエイティブのビジュアル背景量産で使う。「画像生成して」「広告ビジュアル作って」「ai image」で起動。
+description: vercel-labs/ai-cli（Vercel AI Gateway 経由）でローカルから画像を生成する。秘匿キーは 1Password（op run でランタイム注入）、未導入時のインストール案内・Touch ID 連打回避・モデル選定・コスト管理の手順込み。taberu.pro / honn.me 等の X(Twitter)広告クリエイティブのビジュアル背景量産で使う。「画像生成して」「広告ビジュアル作って」「ai image」で起動。
 user-invocable: true
 ---
 
 # ai-cli 画像生成（Vercel AI Gateway）
 
-vercel-labs/ai-cli を使ってローカルから画像を量産する。`AI Gateway` 経由で gemini / imagen / gpt-image 等にアクセスする。**設計思想は「ai-cli はビジュアル背景層だけ生成し、文字（コピー）は Figma でベクター後乗せ」**（画像モデルは日本語が化けるため）。
+vercel-labs/ai-cli を使ってローカルから画像を量産する。`AI Gateway` 経由で gemini / imagen / gpt-image 等にアクセスする。**設計思想は「ai-cli はビジュアル背景層だけ生成し、文字（コピー）は `compose-ad-creative` スキルで HTML/CSS 後乗せ」**（画像モデルは日本語が化けるため）。
 
 ## 起動条件 / 前提
 
 - `op`（1Password CLI）がインストール済みでアプリ統合が有効（`/opt/homebrew/bin/op`）
-- ai-cli が nodenv の **24.14.1** に global インストール済み（実体: `/Users/tsujidaisuke/.nodenv/shims/ai`）
+- ai-cli が公式手順（`npm i -g ai-cli`）で導入済み。**未導入なら下記「未導入時のインストール」に従って入れてからリトライ**
 - Vercel AI Gateway に**有料クレジット**がある（無料枠は画像モデルを弾く。2026-06-09 に $20 投入済み）
+
+### 未導入時のインストール（node バージョン文脈ごとに必要）
+
+ai-cli は **node のバージョンごとの global** に入る（npm/nodenv の仕様）。そのため、別バージョンの node に切り替わるディレクトリで叩くと `command not found` になることがある。**事前に `ai` の有無を確認し、無ければ公式手順で今の文脈にインストールしてから本処理に進む**：
+
+```bash
+# 確認 → 無ければ公式手順で導入（ai-cli は node >=20 で動作）
+command -v ai >/dev/null 2>&1 || npm i -g ai-cli
+```
+
+`nodenv: ai: command not found` が出ても**バージョン番号を固定して回避しようとしない**。それは「今の node 文脈に未導入」のサインなので、上記コマンドで素直に入れる。
 
 ## 🔑 秘匿情報の在り処（最重要・毎回ここを忘れる）
 
@@ -22,14 +33,13 @@ vercel-labs/ai-cli を使ってローカルから画像を量産する。`AI Gat
 - `op run` が実行時だけキーを注入し、終われば消える。**平文ディスク保存ゼロ・コミット事故ゼロ**
 - `op whoami` は "not signed in" を返すが**これは仕様で正常**（アプリ統合認証。vault/item 操作は通る）
 
-## ⚙️ 正しい叩き方（このマシン特有の罠込み）
+## ⚙️ 正しい叩き方
 
-ユーザーの `~/.zshrc` には `ai()` ラッパー関数（`op run` 包み）があるが、**taberu.pro リポジトリ内では node バージョンで壊れる**（repo は node 22.21.1 固定、ai-cli は 24.14.1 在中 → `nodenv: ai: command not found`）。**必ず `NODENV_VERSION=24.14.1` を明示**してシム経由で叩く：
+`AI_GATEWAY_API_KEY` に 1Password 参照を渡し、`op run` でラップして `ai` を叩く（キーは実行時だけ注入される）。`ai` が見つからない場合は前述「未導入時のインストール」で導入してから再実行する：
 
 ```bash
 AI_GATEWAY_API_KEY="op://Private/AI Gateway/credential" \
-NODENV_VERSION=24.14.1 \
-op run -- /Users/tsujidaisuke/.nodenv/shims/ai image "プロンプト" \
+op run -- ai image "プロンプト" \
   -m google/gemini-2.5-flash-image \
   --aspect-ratio 16:9 --no-preview -q -n 2 \
   -o assets/ad-experiments/round1/axis/
@@ -40,15 +50,13 @@ op run -- /Users/tsujidaisuke/.nodenv/shims/ai image "プロンプト" \
 `op run` 1回につき Touch ID プロンプトが1回出る。**複数枚・複数軸は `op run -- bash -c '...'` で1コマンドに束ねる**と認証1回で済む：
 
 ```bash
-AI_GATEWAY_API_KEY="op://Private/AI Gateway/credential" NODENV_VERSION=24.14.1 op run -- bash -c '
-AI=/Users/tsujidaisuke/.nodenv/shims/ai
+AI_GATEWAY_API_KEY="op://Private/AI Gateway/credential" op run -- bash -c '
 M=google/gemini-2.5-flash-image
-"$AI" image "PROMPT A" -m "$M" --no-preview -q -n 2 -o assets/ad-experiments/round1/1-axis/
-"$AI" image "PROMPT B" -m "$M" --no-preview -q -n 2 -o assets/ad-experiments/round1/2-axis/
+ai image "PROMPT A" -m "$M" --no-preview -q -n 2 -o assets/ad-experiments/round1/1-axis/
+ai image "PROMPT B" -m "$M" --no-preview -q -n 2 -o assets/ad-experiments/round1/2-axis/
 '
 ```
 
-- bash -c 内の `ai` は PATH ではなくシム実体を変数で指す。`NODENV_VERSION` は外側 env から子に継承される
 - プロンプト文字列にはアポストロフィ（`'`）を入れない（外側が単一引用符のため）。`cwd` は子に継承されるので相対パス（`assets/...`）でOK
 
 ## 主要フラグ（`ai image --help` で確認済み）
@@ -85,11 +93,11 @@ M=google/gemini-2.5-flash-image
 
 ゴール例: **サイト流入/お試し**。ブランド詳細・Round1 結果はメモリ `project_x_ad_creative_exploration.md` 参照。
 
-1. **コピーとビジュアルを分離**。ai-cli は文字なし背景だけ生成（テキスト用の余白 or 空の吹き出しを必ず確保）。文字は後で Figma でベクター乗せ
+1. **コピーとビジュアルを分離**。ai-cli は文字なし背景だけ生成（テキスト用の余白 or 空の吹き出しを必ず確保）。文字は後で `compose-ad-creative` スキルで乗せる（HTML/CSS のベクター品質、$0・Figma 不要）
 2. **量で殴る**: ビジュアル軸 5方向 × 各2案＝10枚を1コマンドで生成（軸例: 写真シズル / ブランドイラスト / 応援団長マスコット / ミニマルグラデ / ポップコミック）
 3. 全枚を Read で目視評価 → ユーザーが方向を選別
 4. 勝った1〜2軸を `gemini-3-pro-image` で本気生成（Round2）
-5. Figma でコピー乗せ → 既存コピー型をチャンピオンに残しつつビジュアル型を挑戦者として X で A/B
+5. `compose-ad-creative` でコピー乗せ → 既存コピー型をチャンピオンに残しつつビジュアル型を挑戦者として X で A/B
 6. 全軸に注入するブランドDNA: クリーム背景・角丸・アンバーオレンジ＋オリーブ・親しみやすい日本語アプリ調・`Absolutely no text, no letters, no words anywhere.`
 
 ### 作業ディレクトリ
@@ -99,7 +107,7 @@ M=google/gemini-2.5-flash-image
 
 ## 罠リスト（このセッションで踏んだ実績）
 
-- **nodenv バージョン罠**: repo 内で素の `ai` は node 22 に解決され `command not found`。`NODENV_VERSION=24.14.1` 必須
+- **node 文脈ごとに未導入**: ai-cli は node のバージョンごとの global に入る。別バージョンに切り替わる repo 内で `ai` が `command not found` になったら、バージョンを固定して回避するのではなく `npm i -g ai-cli`（公式手順）で今の文脈に入れて再実行する
 - **無料枠ブロック**: `Free tier users do not have access to this model` はモデルID誤りではなく**クレジット不足**。top-up が必要
 - **Touch ID 連打**: 1 `op run` = 1 Touch ID。複数生成は `op run -- bash -c` で束ねる
 - **aspect-ratio が効かない（モデル依存）**: ai-cli の `--aspect-ratio` は gemini で無視される。実測（2026-06-09）: `gemini-2.5-flash-image` は **1:1（1024×1024）固定**、`gemini-3-pro-image` は **≒16:9（1408×768）固定**（指定に関わらず）。比率を厳守したいなら `--size` 直指定を試す or 別モデルで要検証。X 広告は 1:1 も 16:9 もどちらも有効なので致命傷ではない
@@ -109,4 +117,5 @@ M=google/gemini-2.5-flash-image
 ## 関連
 
 - メモリ: `project_x_ad_creative_exploration.md`（探索の全文脈・Round1結果）、`project_ui_tone.md`（トーン方針）
+- 後工程スキル: `compose-ad-creative`（背景＋コピー → カンプ PNG。文字乗せはこちら）
 - 既存スキル: `create-ad-shelf`（honn.me Twitter 広告 Shelf 作成。広告運用フローの姉妹）
