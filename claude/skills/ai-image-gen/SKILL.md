@@ -1,12 +1,14 @@
 ---
 name: ai-image-gen
-description: vercel-labs/ai-cli（Vercel AI Gateway 経由）でローカルから画像を生成する。秘匿キーは 1Password（op run でランタイム注入）、未導入時のインストール案内・Touch ID 連打回避・モデル選定・コスト管理の手順込み。taberu.pro / honn.me 等の X(Twitter)広告クリエイティブのビジュアル背景量産で使う。「画像生成して」「広告ビジュアル作って」「ai image」で起動。
+description: vercel-labs/ai-cli（Vercel AI Gateway 経由）でローカルから画像を生成する汎用ツール。Claude 本体が持たない「画像生成」機能を補う。秘匿キーは 1Password（op run でランタイム注入）、未導入時のインストール案内・Touch ID 連打回避・モデル選定・コスト管理の手順込み。用途は問わない（広告ビジュアル・素材・モック等）。「画像生成して」「画像作って」「ai image」で起動。
 user-invocable: true
 ---
 
 # ai-cli 画像生成（Vercel AI Gateway）
 
-vercel-labs/ai-cli を使ってローカルから画像を量産する。`AI Gateway` 経由で gemini / imagen / gpt-image 等にアクセスする。**設計思想は「ai-cli はビジュアル背景層だけ生成し、文字（コピー）は `compose-ad-creative` スキルで HTML/CSS 後乗せ」**（画像モデルは日本語が化けるため）。
+vercel-labs/ai-cli を使ってローカルから画像を生成する。`AI Gateway` 経由で gemini / imagen / gpt-image 等にアクセスする。**Claude 本体が持たない「画像生成」機能を補う汎用ツール**で、用途は問わない。
+
+> 画像モデルは**日本語テキストが化ける**ため、画像内に文字を焼きたいときは「背景だけ生成して文字は別途ベクターで後乗せ」する分業が無難（汎用 Tips）。
 
 ## 起動条件 / 前提
 
@@ -41,23 +43,26 @@ command -v ai >/dev/null 2>&1 || npm i -g ai-cli
 AI_GATEWAY_API_KEY="op://Private/AI Gateway/credential" \
 op run -- ai image "プロンプト" \
   -m google/gemini-2.5-flash-image \
-  --aspect-ratio 16:9 --no-preview -q -n 2 \
-  -o assets/ad-experiments/round1/axis/
+  --no-preview -q -n 2 \
+  -o out/
 ```
+
+- `-o` はディレクトリ指定で `output-1.png` / `output-2.png` と自動命名される。出力先は任意（コミットしたくない実験用なら `.gitignore` に逃がす）。
+- 生成画像の目視評価は Read ツールで PNG を開いて行う（捏造しない）。
 
 ### Touch ID 連打を避ける（複数生成は1コマンドに包む）
 
-`op run` 1回につき Touch ID プロンプトが1回出る。**複数枚・複数軸は `op run -- bash -c '...'` で1コマンドに束ねる**と認証1回で済む：
+`op run` 1回につき Touch ID プロンプトが1回出る。**複数枚・複数プロンプトは `op run -- bash -c '...'` で1コマンドに束ねる**と認証1回で済む：
 
 ```bash
 AI_GATEWAY_API_KEY="op://Private/AI Gateway/credential" op run -- bash -c '
 M=google/gemini-2.5-flash-image
-ai image "PROMPT A" -m "$M" --no-preview -q -n 2 -o assets/ad-experiments/round1/1-axis/
-ai image "PROMPT B" -m "$M" --no-preview -q -n 2 -o assets/ad-experiments/round1/2-axis/
+ai image "PROMPT A" -m "$M" --no-preview -q -n 2 -o out/a/
+ai image "PROMPT B" -m "$M" --no-preview -q -n 2 -o out/b/
 '
 ```
 
-- プロンプト文字列にはアポストロフィ（`'`）を入れない（外側が単一引用符のため）。`cwd` は子に継承されるので相対パス（`assets/...`）でOK
+- プロンプト文字列にはアポストロフィ（`'`）を入れない（外側が単一引用符のため）。`cwd` は子に継承されるので相対パス（`out/...`）でOK。
 
 ## 主要フラグ（`ai image --help` で確認済み）
 
@@ -73,49 +78,26 @@ ai image "PROMPT B" -m "$M" --no-preview -q -n 2 -o assets/ad-experiments/round1
 | `--no-preview` `-q` | ターミナル出力を抑制（Bash ツール経由では付ける） |
 | `--json` | メタデータを JSON 出力 |
 
-- **参照画像フラグ（`-i`）はこのバージョンのヘルプに無い**。過去メモの `-i ref.png` は要再検証。当面はブランド世界観をテキストプロンプトに言語化する
-- 生成画像の目視評価は Read ツールで PNG を開いて行う（捏造しない）
+- **参照画像フラグ（`-i`）はこのバージョンのヘルプに無い**。過去メモの `-i ref.png` は要再検証。当面は望む世界観をテキストプロンプトに言語化する。
 
 ## モデル選定とコスト
 
-`ai models` で画像モデル一覧（現在39個）。代表:
+**`google/gemini-2.5-flash-image` をデフォルトにする。基本これで進める**（安い・速い。10枚で数十円レベル）。先回りで高いモデルを使わない。
 
-- **`google/gemini-2.5-flash-image`** — 安い・速い。**幅出しラウンドはこれ**（10枚で数十円レベル）
-- **`google/gemini-3-pro-image`** — 高品質。**勝った方向の決勝生成**に使う
-- 他: `google/imagen-4.0-{fast,generate,ultra}-001`, `openai/gpt-image-{1,2,1.5}`, `xai/grok-imagine-image`
-- 戦略: **flash で量産→選別→pro で本気生成**
+議論・目視評価の中で**「これはモデル起因の品質問題だ」と判断したときに初めて**、上位モデルへ上げる/変える:
+
+- `google/gemini-3-pro-image` — 高品質。
+- 他の候補: `google/imagen-4.0-{fast,generate,ultra}-001`, `openai/gpt-image-{1,2,1.5}`, `xai/grok-imagine-image`。
+- 全モデル一覧は `ai models` で確認（現在39個）。
 
 ### 課金まわりの未対応TODO（漏洩時の請求爆弾対策）
 
-- AI Gateway ダッシュボードで ①このCLI専用キーを発行して `op` の値を差し替え ②スペンド上限設定。**未確認なら毎回ユーザーに確認**
+- AI Gateway ダッシュボードで ①このCLI専用キーを発行して `op` の値を差し替え ②スペンド上限設定。**未確認なら毎回ユーザーに確認**。
 
-## taberu.pro 広告クリエイティブ・ワークフロー（主ユースケース）
+## 罠リスト（実証済み）
 
-ゴール例: **サイト流入/お試し**。ブランド詳細・Round1 結果はメモリ `project_x_ad_creative_exploration.md` 参照。
-
-1. **コピーとビジュアルを分離**。ai-cli は文字なし背景だけ生成（テキスト用の余白 or 空の吹き出しを必ず確保）。文字は後で `compose-ad-creative` スキルで乗せる（HTML/CSS のベクター品質、$0・Figma 不要）
-2. **量で殴る**: ビジュアル軸 5方向 × 各2案＝10枚を1コマンドで生成（軸例: 写真シズル / ブランドイラスト / 応援団長マスコット / ミニマルグラデ / ポップコミック）
-3. 全枚を Read で目視評価 → ユーザーが方向を選別
-4. 勝った1〜2軸を `gemini-3-pro-image` で本気生成（Round2）
-5. `compose-ad-creative` でコピー乗せ → 既存コピー型をチャンピオンに残しつつビジュアル型を挑戦者として X で A/B
-6. 全軸に注入するブランドDNA: クリーム背景・角丸・アンバーオレンジ＋オリーブ・親しみやすい日本語アプリ調・`Absolutely no text, no letters, no words anywhere.`
-
-### 作業ディレクトリ
-
-- `assets/ad-experiments/round{N}/{軸名}/`（taberu.pro リポジトリ内。コミットしたくなければ `.gitignore` に追加）
-- ブランド設計図の既存素材: `assets/taberu-pro.png`（og-cover）
-
-## 罠リスト（このセッションで踏んだ実績）
-
-- **node 文脈ごとに未導入**: ai-cli は node のバージョンごとの global に入る。別バージョンに切り替わる repo 内で `ai` が `command not found` になったら、バージョンを固定して回避するのではなく `npm i -g ai-cli`（公式手順）で今の文脈に入れて再実行する
-- **無料枠ブロック**: `Free tier users do not have access to this model` はモデルID誤りではなく**クレジット不足**。top-up が必要
-- **Touch ID 連打**: 1 `op run` = 1 Touch ID。複数生成は `op run -- bash -c` で束ねる
-- **aspect-ratio が効かない（モデル依存）**: ai-cli の `--aspect-ratio` は gemini で無視される。実測（2026-06-09）: `gemini-2.5-flash-image` は **1:1（1024×1024）固定**、`gemini-3-pro-image` は **≒16:9（1408×768）固定**（指定に関わらず）。比率を厳守したいなら `--size` 直指定を試す or 別モデルで要検証。X 広告は 1:1 も 16:9 もどちらも有効なので致命傷ではない
-- **広告は背景だけでは不十分**: 生成した背景をそのまま渡すと「どこに何を配置するか」が空白で手直しが必要になる。コピー配置済みの原型（Figma 等のレイアウトモック）まで作って提示する。詳細は memory `project_x_ad_creative_exploration.md`
-- **`op whoami` の "not signed in"** は正常。署名状態を疑わない
-
-## 関連
-
-- メモリ: `project_x_ad_creative_exploration.md`（探索の全文脈・Round1結果）、`project_ui_tone.md`（トーン方針）
-- 後工程スキル: `compose-ad-creative`（背景＋コピー → カンプ PNG。文字乗せはこちら）
-- 既存スキル: `create-ad-shelf`（honn.me Twitter 広告 Shelf 作成。広告運用フローの姉妹）
+- **node 文脈ごとに未導入**: ai-cli は node のバージョンごとの global に入る。別バージョンに切り替わる repo 内で `ai` が `command not found` になったら、バージョンを固定して回避するのではなく `npm i -g ai-cli`（公式手順）で今の文脈に入れて再実行する。
+- **無料枠ブロック**: `Free tier users do not have access to this model` はモデルID誤りではなく**クレジット不足**。top-up が必要。
+- **Touch ID 連打**: 1 `op run` = 1 Touch ID。複数生成は `op run -- bash -c` で束ねる。
+- **aspect-ratio が効かない（モデル依存）**: ai-cli の `--aspect-ratio` は gemini で無視される。実測（2026-06-09）: `gemini-2.5-flash-image` は **1:1（1024×1024）固定**、`gemini-3-pro-image` は **≒16:9（1408×768）固定**（指定に関わらず）。比率を厳守したいなら `--size` 直指定を試す or 別モデルで要検証。
+- **`op whoami` の "not signed in"** は正常。署名状態を疑わない。
