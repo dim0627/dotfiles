@@ -178,3 +178,8 @@ if [ -f '/Users/tsujidaisuke/google-cloud-sdk/completion.zsh.inc' ]; then . '/Us
 
 # bun completions
 [ -s "/Users/tsujidaisuke/.bun/_bun" ] && source "/Users/tsujidaisuke/.bun/_bun"
+
+# vercel-labs/ai-cli: 1Password から実行時だけ API キーを注入する。
+ai() {
+  AI_GATEWAY_API_KEY="op://Private/AI Gateway/credential" op run -- ai "$@"
+}
