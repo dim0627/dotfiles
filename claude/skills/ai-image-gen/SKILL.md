@@ -15,14 +15,14 @@ vercel-labs/ai-cli を使ってローカルから画像を生成する。`AI Gat
 すべて満たしてから本処理に進む。
 
 - **`op`（1Password CLI）がインストール済みで使えること**（`/opt/homebrew/bin/op`・アプリ統合が有効）。`op whoami` は "not signed in" を返すが**これは仕様で正常**（アプリ統合認証。vault/item 操作は通る）。
-- **ai-cli がインストール済みであること**（公式手順 `npm i -g ai-cli`、node >=20）。ai-cli は **node のバージョンごとの global** に入るため、別バージョンの node に切り替わるディレクトリでは `command not found` になる。その場合は**バージョン番号を固定して回避せず、その node 文脈で素直に入れて**再実行する:
+- **ai-cli が最新で導入済みであること**（公式手順 `npm i -g ai-cli@latest`、node >=20）。**フラグや挙動はバージョンで変わる**ので最新に保つ（例: 参照画像フラグ `-i` は 0.2.x には無く 0.3.x で利用可）。ai-cli は **node のバージョンごとの global** に入るため、別バージョンの node に切り替わるディレクトリでは `command not found` になる。その場合は**バージョン番号を固定して回避せず、その node 文脈で素直に入れて**再実行する:
 
   ```bash
-  # 確認 → 無ければ公式手順で導入
-  command -v ai >/dev/null 2>&1 || npm i -g ai-cli
+  # 確認 → 無ければ／古ければ最新を導入
+  command -v ai >/dev/null 2>&1 || npm i -g ai-cli@latest
   ```
 
-- **Vercel AI Gateway に有料クレジットがあること**（2026-06-09 に $20 投入済み）。無料枠は画像モデルを弾く。`Free tier users do not have access to this model` はモデルID誤りではなく**クレジット不足**のサインで、top-up が必要。漏洩時の請求対策として AI Gateway 側でスペンド上限を設定しておくと安全。
+- **Vercel AI Gateway に有料クレジットがあること**。無料枠は画像モデルを弾く。`Free tier users do not have access to this model` はモデルID誤りではなく**クレジット不足**のサインで、top-up が必要。漏洩時の請求対策として AI Gateway 側でスペンド上限を設定しておくと安全。
 
 ## 🔑 秘匿情報の在り処（最重要・毎回ここを忘れる）
 
@@ -60,12 +60,15 @@ ai image "PROMPT B" -m "$M" --no-preview -q -n 2 -o out/b/
 
 - プロンプト文字列にはアポストロフィ（`'`）を入れない（外側が単一引用符のため）。`cwd` は子に継承されるので相対パス（`out/...`）でOK。
 
-## 主要フラグ（`ai image --help` / ai-cli 0.2.1 で確認）
+## 主要フラグ（`ai image --help` / ai-cli 0.3.1 で確認）
+
+フラグはバージョンで増減する。**実行前に `ai image --help` で都度確認する**のが確実（下表は 0.3.1 時点）。
 
 | フラグ | 意味 |
 |---|---|
 | `-m, --model` | `creator/model-name`。カンマ区切りでマルチモデル比較 |
 | `-o, --output` | ファイルパス or **ディレクトリ**。dir 指定で `output-1.png` / `output-2.png` 自動命名 |
+| `-i, --image` | 参照画像（パス or URL）。繰り返し指定可（0.3.x で利用可） |
 | `-n, --count` | モデルあたり生成枚数（default 1） |
 | `--size` | 例 `1024x1024`（ピクセル直指定） |
 | `--aspect-ratio` | 例 `16:9`（**モデルが無視することがある→罠リスト参照**） |
@@ -75,8 +78,6 @@ ai image "PROMPT B" -m "$M" --no-preview -q -n 2 -o out/b/
 | `--no-preview` | インラインプレビューを無効化（Bash ツール経由では付ける） |
 | `-p, --concurrency` | 並列生成数（default 4） |
 | `--json` | メタデータを JSON 出力 |
-
-- **参照画像フラグ（`-i`）は v0.2.1 のヘルプに無い**（2026-06-10 実機確認済み）。当面は望む世界観をテキストプロンプトに言語化する。
 
 ## モデル選定とコスト
 
