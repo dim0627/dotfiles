@@ -102,13 +102,14 @@ const renderHTML = (c) => `<!doctype html>
   html, body { width: ${viewport.width}px; height: ${viewport.height}px; }
   .stage {
     position: relative; width: ${viewport.width}px; height: ${viewport.height}px; overflow: hidden;
-    background-image: url("${bgUrl(c.bg)}"); background-size: cover; background-position: ${c.bgPos || "center"};
+    background-image: url("${bgUrl(c.bg)}"); background-size: ${c.bgSize || "cover"}; background-position: ${c.bgPos || "center"};
     font-family: "${brand.fontFamily}", sans-serif; color: var(--ink);
   }
-  /* 左側に淡いベールを敷いて文字の可読性を底上げ（背景の絵柄は活かす） */
+  /* 左側に淡いベールを敷いて文字の可読性を底上げ（背景の絵柄は活かす）。
+     色は color-mix で任意 CSS color（oklch/hex/rgb）からアルファ合成する（Chromium=agent-browser 対応） */
   .stage::before {
     content: ""; position: absolute; inset: 0;
-    background: linear-gradient(105deg, ${hexToRgba(brand.paper, 0.8)} 0%, ${hexToRgba(brand.paper, 0.52)} 40%, ${hexToRgba(brand.paper, 0)} 64%);
+    background: linear-gradient(105deg, ${alpha(brand.paper, 0.8)} 0%, ${alpha(brand.paper, 0.52)} 40%, ${alpha(brand.paper, 0)} 64%);
   }
   .copy { position: absolute; left: 96px; top: 132px; width: 840px; z-index: 2; }
   .eyebrow { font-weight: 700; font-size: 38px; letter-spacing: 0.06em; opacity: 0.9; margin-bottom: 34px; }
@@ -119,7 +120,7 @@ const renderHTML = (c) => `<!doctype html>
   .hl-line.accent { color: var(--accent); }
   .sub { margin-top: 44px; font-weight: 700; font-size: 44px; line-height: 1.5; letter-spacing: 0.01em; opacity: 0.92; }
   /* CTA ボタン（sub 直下、流入導線として明示） */
-  .cta { display: inline-flex; align-items: center; gap: 16px; margin-top: 52px; background: var(--accent); color: #fff; font-weight: 700; font-size: 36px; letter-spacing: 0.02em; padding: 24px 48px; border-radius: 999px; box-shadow: 0 12px 30px ${hexToRgba(brand.accent, 0.36)}; }
+  .cta { display: inline-flex; align-items: center; gap: 16px; margin-top: 52px; background: var(--accent); color: #fff; font-weight: 700; font-size: 36px; letter-spacing: 0.02em; padding: 24px 48px; border-radius: 999px; box-shadow: 0 12px 30px ${alpha(brand.accent, 0.36)}; }
   .cta:empty { display: none; }
   .cta .arrow { font-size: 36px; transform: translateY(-1px); }
   /* ロゴは下部中央（左下の X キャプション領域を避ける） */
@@ -144,12 +145,12 @@ const renderHTML = (c) => `<!doctype html>
 </html>
 `;
 
-// #rrggbb → rgba(r,g,b,a)。ベールや影の透明度指定に使う
-function hexToRgba(hex, alpha) {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex ?? "");
-  if (!m) return `rgba(0,0,0,${alpha})`;
-  const n = parseInt(m[1], 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+// 任意 CSS color（oklch/hex/rgb/名前付き）を a (0–1) のアルファで合成する。
+// color-mix は Chromium（agent-browser）対応。これにより brand.* に Tailwind v4 の
+// oklch トークンや hex/rgb をそのまま渡せる（旧 hexToRgba は #rrggbb 以外を黒に化けさせていた）。
+function alpha(color, a) {
+  const pct = Math.round(a * 100);
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 }
 
 mkdirSync(outDir, { recursive: true });
