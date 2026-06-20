@@ -1,6 +1,6 @@
 ---
 name: ai-image-gen
-description: vercel-labs/ai-cli（Vercel AI Gateway 経由）でローカルから画像を生成する汎用ツール。Claude 本体が持たない「画像生成」機能を補う。秘匿キーは 1Password（op run でランタイム注入）、未導入時のインストール案内・Touch ID 連打回避・モデル選定・コスト管理の手順込み。用途は問わない（広告ビジュアル・素材・モック等）。「画像生成して」「画像作って」「ai image」で起動。
+description: vercel-labs/ai-cli（Vercel AI Gateway 経由）でローカルから画像を生成する汎用ツール。Claude 本体が持たない「画像生成」機能を補う。API キーはカレントプロジェクトの `.env`（`AI_GATEWAY_API_KEY`）から読む。未導入時のインストール案内・モデル選定・コスト管理の手順込み。用途は問わない（広告ビジュアル・素材・モック等）。「画像生成して」「画像作って」「ai image」で起動。
 user-invocable: true
 ---
 
@@ -14,7 +14,7 @@ vercel-labs/ai-cli を使ってローカルから画像を生成する。`AI Gat
 
 すべて満たしてから本処理に進む。
 
-- **`op`（1Password CLI）がインストール済みで使えること**（`/opt/homebrew/bin/op`・アプリ統合が有効）。`op whoami` は "not signed in" を返すが**これは仕様で正常**（アプリ統合認証。vault/item 操作は通る）。
+- **`AI_GATEWAY_API_KEY` が解決できること**（環境変数を優先、無ければカレントプロジェクトの `.env` から読む）。どちらにも無ければ後述の「🔑 秘匿情報の在り処」を参照してユーザーに置き場所を伝え、停止する（勝手に探さない）。
 - **ai-cli が最新で導入済みであること**（公式手順 `npm i -g ai-cli@latest`、node >=20）。**フラグや挙動はバージョンで変わる**ので最新に保つ（例: 参照画像フラグ `-i` は 0.2.x には無く 0.3.x で利用可）。ai-cli は **node のバージョンごとの global** に入るため、別バージョンの node に切り替わるディレクトリでは `command not found` になる。その場合は**バージョン番号を固定して回避せず、その node 文脈で素直に入れて**再実行する:
 
   ```bash
@@ -24,20 +24,23 @@ vercel-labs/ai-cli を使ってローカルから画像を生成する。`AI Gat
 
 - **Vercel AI Gateway に有料クレジットがあること**。無料枠は画像モデルを弾く。`Free tier users do not have access to this model` はモデルID誤りではなく**クレジット不足**のサインで、top-up が必要。漏洩時の請求対策として AI Gateway 側でスペンド上限を設定しておくと安全。
 
-## 🔑 秘匿情報の在り処（最重要・毎回ここを忘れる）
+## 🔑 秘匿情報の在り処（API キー）
 
-- API キーは **1Password に保管**。参照は `op://Private/AI Gateway/credential`
-  - vault=`Private` / item=`AI Gateway`（カテゴリ API_CREDENTIAL）/ field=`credential`（CONCEALED, 60文字）
-- ai-cli は **環境変数 `AI_GATEWAY_API_KEY` だけ**を読む（ログインコマンド・設定ファイルは無い）
-- `op run` が実行時だけキーを注入し、終われば消える。**平文ディスク保存ゼロ・コミット事故ゼロ**
+- ai-cli は **環境変数 `AI_GATEWAY_API_KEY` だけ**を読む（ログインコマンド・設定ファイルは無い）。
+- キーの解決は **環境変数を優先し、無ければカレントプロジェクトの `.env` から読む**。`.env` には `AI_GATEWAY_API_KEY=<キー>` で置く。
+  - この順序により、CI（GitHub Actions 等）で env に直接渡る無人環境でも `.env` 無しで動く。
+- **`.env` は必ず `.gitignore` に入れる**（平文の鍵がコミットされる事故を防ぐ）。未登録なら追加を提案する。
+- 環境変数にも `.env` にも `AI_GATEWAY_API_KEY` が無い場合は、置き場所（`<プロジェクトルート>/.env`）をユーザーに伝えて**停止する**。他の場所から鍵を勝手に探さない。
+
+> 旧版は 1Password（`op run` で `op://Private/AI Gateway/credential` を実行時注入）に依存していた。Touch ID ゲートと引き換えに無人実行ができず、依存も重かったため `.env` 集約へ移行した。
 
 ## ⚙️ 正しい叩き方
 
-`AI_GATEWAY_API_KEY` に 1Password 参照を渡し、`op run` でラップして `ai` を叩く（キーは実行時だけ注入される）:
+キーを解決して `export` してから `ai` を叩く。**Bash ツールはシェルの環境変数を呼び出し間で引き継がない**ため、解決と `ai` は必ず**同じコマンド内**にまとめる。`source .env` ではなく **`grep` で対象キー1行だけ抜く**（`.env` 内の他変数を巻き込む副作用・構文エラーを避ける）:
 
 ```bash
-AI_GATEWAY_API_KEY="op://Private/AI Gateway/credential" \
-op run -- ai image "プロンプト" \
+export AI_GATEWAY_API_KEY="${AI_GATEWAY_API_KEY:-$(grep -E '^AI_GATEWAY_API_KEY=' .env | head -1 | cut -d= -f2-)}"
+ai image "プロンプト" \
   -m google/gemini-2.5-flash-image \
   --no-preview -q -n 2 \
   -o out/
@@ -49,6 +52,7 @@ op run -- ai image "プロンプト" \
   - **ファイル名を固定したいときは `-o` にファイルパスを直接渡す**（その場合は `-n 1` 前提）。複数枚を決め打ち名にしたいなら生成後に `mv` でリネームする。
   - 出力先は任意（コミットしたくない実験用なら `.gitignore` に逃がす）。
 - 生成画像の目視評価は Read ツールで PNG を開いて行う（捏造しない）。
+- 複数枚は `-n`、複数モデル比較は `-m a,b` で1コマンドに収まる。異なるプロンプトを複数撃つ場合は、解決した同じコマンド内で `ai image` を続けて並べる（別の Bash 呼び出しに分けると環境変数が引き継がれず、毎回キー解決し直しになる）。
 
 ### 生成後は出力フォルダを開く（必須）
 
@@ -60,20 +64,6 @@ open out/
 
 - `-o` にファイルパスを直接渡した場合も、開くのは**そのファイルの親ディレクトリ**（`open "$(dirname <path>)"`）。画像単体を `open` するとビューアが枚数分立ち上がるため、フォルダで開く。
 - 複数ディレクトリに出力した場合は、それらの**共通の親ディレクトリ**を1回だけ開く（`open` 連打でウィンドウを散らかさない）。
-
-### Touch ID 連打を避ける（複数生成は1コマンドに包む）
-
-`op run` 1回につき Touch ID プロンプトが1回出る。**複数枚・複数プロンプトは `op run -- bash -c '...'` で1コマンドに束ねる**と認証1回で済む:
-
-```bash
-AI_GATEWAY_API_KEY="op://Private/AI Gateway/credential" op run -- bash -c '
-M=google/gemini-2.5-flash-image
-ai image "PROMPT A" -m "$M" --no-preview -q -n 2 -o out/a/
-ai image "PROMPT B" -m "$M" --no-preview -q -n 2 -o out/b/
-'
-```
-
-- プロンプト文字列にはアポストロフィ（`'`）を入れない（外側が単一引用符のため）。`cwd` は子に継承されるので相対パス（`out/...`）でOK。
 
 ## 主要フラグ（`ai image --help` / ai-cli 0.3.1 で確認）
 
