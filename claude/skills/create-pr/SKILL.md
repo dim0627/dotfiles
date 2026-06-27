@@ -49,22 +49,29 @@ allowed-tools: Bash(git status*), Bash(git push*), Bash(git checkout -b *), Bash
 
 ### 6. PR作成
 
-PRタイトルとサマリを作成し、`gh pr create` で作成する:
+まずリポジトリのPRテンプレートを確認する:
 
-- タイトルは70文字以内で簡潔に
-- 本文は HEREDOC 形式で渡す:
-  ```bash
-  gh pr create --title "タイトル" --body "$(cat <<'EOF'
-  ## Summary
-  - 変更点を箇条書きで
+```bash
+ls .github/PULL_REQUEST_TEMPLATE.md .github/pull_request_template.md docs/pull_request_template.md 2>/dev/null | head -1
+```
 
-  ## Test plan
-  - [ ] テスト項目
+- **テンプレートあり**: テンプレートの構造・見出し・チェックリストを完全踏襲してPR本文を作成する
+- **テンプレートなし**: 以下のデフォルトフォーマットを使用する
 
-  🤖 Generated with [Claude Code](https://claude.com/claude-code)
-  EOF
-  )"
-  ```
+タイトルは70文字以内で簡潔に。本文は HEREDOC 形式で渡す:
+
+```bash
+gh pr create --title "タイトル" --body "$(cat <<'EOF'
+## Summary
+- 変更点を箇条書きで
+
+## Test plan
+- [ ] テスト項目
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
 
 ### 7. 結果報告
 
