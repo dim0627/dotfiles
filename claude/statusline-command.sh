@@ -35,17 +35,24 @@ if [ -n "$model" ]; then
   line="$line $(printf "\033[35m%s\033[0m" "$model")"
 fi
 
-# context usage
-if [ -n "$used" ]; then
-  used_int=$(printf "%.0f" "$used")
-  if [ "$used_int" -ge 80 ]; then
-    color="\033[31m"
-  elif [ "$used_int" -ge 50 ]; then
-    color="\033[33m"
+# context usage（絶対トークン基準で警戒。1M/200k どちらのウィンドウでも
+# 作話バグの発火帯（OP報告: 100k〜170k）で確実に色が変わるよう実トークン数で判定する）
+tokens=$(echo "$input" | jq -r '.context_window.total_input_tokens // empty')
+if [ -n "$tokens" ]; then
+  k=$((tokens / 1000))
+  if [ "$tokens" -ge 100000 ]; then
+    color="\033[31m"   # 赤：作話発火帯（OP報告 100k〜）に到達、/clear 推奨
+  elif [ "$tokens" -ge 70000 ]; then
+    color="\033[33m"   # 黄：警戒、そろそろ畳む準備
   else
-    color="\033[36m"
+    color="\033[36m"   # シアン：安全
   fi
-  line="$line $(printf "${color}ctx:%s%%\033[0m" "$used_int")"
+  if [ -n "$used" ]; then
+    pct=$(printf "%.0f" "$used")
+    line="$line $(printf "${color}ctx:%sk(%s%%)\033[0m" "$k" "$pct")"
+  else
+    line="$line $(printf "${color}ctx:%sk\033[0m" "$k")"
+  fi
 fi
 
 printf "%b" "$line"
