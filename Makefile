@@ -29,3 +29,8 @@ link-claude:
 		skill_name=$$(basename "$$skill_dir"); \
 		ln -snf "$$skill_dir" "$(HOME_DIR)/.claude/skills/$$skill_name"; \
 	done
+	mkdir -p $(HOME_DIR)/.claude/agents
+	@for agent_file in $(SCRIPT_DIR)claude/agents/*.md; do \
+		agent_name=$$(basename "$$agent_file"); \
+		ln -snf "$$agent_file" "$(HOME_DIR)/.claude/agents/$$agent_name"; \
+	done
