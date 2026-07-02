@@ -1,12 +1,14 @@
 ---
 name: ai-image-gen
-description: vercel-labs/ai-cli（Vercel AI Gateway 経由）でローカルから画像を生成する汎用ツール。Claude 本体が持たない「画像生成」機能を補う。API キーはカレントプロジェクトの `.env`（`AI_GATEWAY_API_KEY`）から読む。未導入時のインストール案内・モデル選定・コスト管理の手順込み。用途は問わない（広告ビジュアル・素材・モック等）。「画像生成して」「画像作って」「ai image」で起動。
+description: Vercel AI Gateway を AI SDK で直叩きしてローカルから画像を生成する汎用ツール（スキル同梱の gen-image.mjs を実行）。Claude 本体が持たない「画像生成」機能を補う。API キーはカレントプロジェクトの `.env`（`AI_GATEWAY_API_KEY`）から読む。未導入時のセットアップ案内・モデル選定・コスト管理の手順込み。用途は問わない（広告ビジュアル・素材・モック等）。「画像生成して」「画像作って」「ai image」で起動。
 user-invocable: true
 ---
 
-# ai-cli 画像生成（Vercel AI Gateway）
+# AI Gateway 直叩き画像生成（gen-image.mjs）
 
-vercel-labs/ai-cli を使ってローカルから画像を生成する。`AI Gateway` 経由で gemini / imagen / gpt-image 等にアクセスする。**Claude 本体が持たない「画像生成」機能を補う汎用ツール**で、用途は問わない。
+スキル同梱の `scripts/gen-image.mjs` で、AI SDK から Vercel AI Gateway を直接叩いて画像を生成する。gemini / imagen / gpt-image / flux 等にアクセスできる。**Claude 本体が持たない「画像生成」機能を補う汎用ツール**で、用途は問わない。
+
+> 旧版は vercel-labs/ai-cli の wrapper だったが卒業した（オーナーの PR #62 がメンテナの同内容 PR #72 で上書きされた経緯＋aspect ratio 等を自分の手で制御するため）。品質・コストは同一（同じ Gateway）。
 
 > 画像モデルは**日本語テキストが化ける**ため、画像内に文字を焼きたいときは「背景だけ生成して文字は別途ベクターで後乗せ」する分業が無難（汎用 Tips）。
 
@@ -14,45 +16,41 @@ vercel-labs/ai-cli を使ってローカルから画像を生成する。`AI Gat
 
 すべて満たしてから本処理に進む。
 
-- **`AI_GATEWAY_API_KEY` が解決できること**（環境変数を優先、無ければカレントプロジェクトの `.env` から読む）。どちらにも無ければ後述の「🔑 秘匿情報の在り処」を参照してユーザーに置き場所を伝え、停止する（勝手に探さない）。
-- **ai-cli が最新で導入済みであること**（公式手順 `npm i -g ai-cli@latest`、node >=20）。**フラグや挙動はバージョンで変わる**ので最新に保つ（例: 参照画像フラグ `-i` は 0.2.x には無く 0.3.x で利用可）。ai-cli は **node のバージョンごとの global** に入るため、別バージョンの node に切り替わるディレクトリでは `command not found` になる。その場合は**バージョン番号を固定して回避せず、その node 文脈で素直に入れて**再実行する:
+- **`AI_GATEWAY_API_KEY` が解決できること**（スクリプトが環境変数を優先し、無ければ**カレントディレクトリの `.env`** から読む）。どちらにも無ければスクリプトがエラーで止まる。その場合は後述の「🔑 秘匿情報の在り処」を参照してユーザーに置き場所を伝え、停止する（勝手に探さない）。
+- **スクリプトの依存が入っていること**（node >=20）。無ければ入れる:
 
   ```bash
-  # 確認 → 無ければ／古ければ最新を導入
-  command -v ai >/dev/null 2>&1 || npm i -g ai-cli@latest
+  SKILL_SCRIPTS="$HOME/.claude/skills/ai-image-gen/scripts"
+  [ -d "$SKILL_SCRIPTS/node_modules" ] || npm i --prefix "$SKILL_SCRIPTS"
   ```
 
 - **Vercel AI Gateway に有料クレジットがあること**。無料枠は画像モデルを弾く。`Free tier users do not have access to this model` はモデルID誤りではなく**クレジット不足**のサインで、top-up が必要。漏洩時の請求対策として AI Gateway 側でスペンド上限を設定しておくと安全。
+- Bash ツール経由で実行する場合、ネットワークアクセスのため **`dangerouslyDisableSandbox` が必要**。
 
 ## 🔑 秘匿情報の在り処（API キー）
 
-- ai-cli は **環境変数 `AI_GATEWAY_API_KEY` だけ**を読む（ログインコマンド・設定ファイルは無い）。
-- キーの解決は **環境変数を優先し、無ければカレントプロジェクトの `.env` から読む**。`.env` には `AI_GATEWAY_API_KEY=<キー>` で置く。
+- キーの解決は**スクリプト内蔵**: 環境変数 `AI_GATEWAY_API_KEY` を優先し、無ければ**カレントディレクトリの `.env`** から `AI_GATEWAY_API_KEY=` の行だけを読む（他の変数は巻き込まない）。旧 CLI 時代の「grep で抜いて export」の儀式は不要。
   - この順序により、CI（GitHub Actions 等）で env に直接渡る無人環境でも `.env` 無しで動く。
 - **`.env` は必ず `.gitignore` に入れる**（平文の鍵がコミットされる事故を防ぐ）。未登録なら追加を提案する。
-- 環境変数にも `.env` にも `AI_GATEWAY_API_KEY` が無い場合は、置き場所（`<プロジェクトルート>/.env`）をユーザーに伝えて**停止する**。他の場所から鍵を勝手に探さない。
-
-> 旧版は 1Password（`op run` で `op://Private/AI Gateway/credential` を実行時注入）に依存していた。Touch ID ゲートと引き換えに無人実行ができず、依存も重かったため `.env` 集約へ移行した。
+- どちらにも無い場合は、置き場所（`<プロジェクトルート>/.env`）をユーザーに伝えて**停止する**。他の場所から鍵を勝手に探さない。
 
 ## ⚙️ 正しい叩き方
 
-キーを解決して `export` してから `ai` を叩く。**Bash ツールはシェルの環境変数を呼び出し間で引き継がない**ため、解決と `ai` は必ず**同じコマンド内**にまとめる。`source .env` ではなく **`grep` で対象キー1行だけ抜く**（`.env` 内の他変数を巻き込む副作用・構文エラーを避ける）:
+**プロジェクトルート（`.env` のある場所）をカレントにして**実行する:
 
 ```bash
-export AI_GATEWAY_API_KEY="${AI_GATEWAY_API_KEY:-$(grep -E '^AI_GATEWAY_API_KEY=' .env | head -1 | cut -d= -f2-)}"
-ai image "プロンプト" \
+node ~/.claude/skills/ai-image-gen/scripts/gen-image.mjs \
+  "プロンプト" \
   -m google/gemini-2.5-flash-image \
-  --no-preview -q -n 2 \
+  -n 2 --aspect-ratio 16:9 \
   -o out/
 ```
 
-- `-o` にディレクトリを渡すと **`<生成ID>[-<連番>].png`** で自動命名される（`output-N.png` ではない。0.3.1 のソースで確認済み）。`<生成ID>` は生成結果の id（`aitxt-<hex>` 形式）。
-  - `-n 1`（単数・単一モデル）: 連番なしで `aitxt-<hash>.png`
-  - `-n 2` 以上 / マルチモデル: ジョブごとに別 id ＋連番が付き `aitxt-<hashA>-1.png` / `aitxt-<hashB>-2.png`（hash はジョブごとに異なる）
-  - **ファイル名を固定したいときは `-o` にファイルパスを直接渡す**（その場合は `-n 1` 前提）。複数枚を決め打ち名にしたいなら生成後に `mv` でリネームする。
-  - 出力先は任意（コミットしたくない実験用なら `.gitignore` に逃がす）。
-- 生成画像の目視評価は Read ツールで PNG を開いて行う（捏造しない）。
-- 複数枚は `-n`、複数モデル比較は `-m a,b` で1コマンドに収まる。異なるプロンプトを複数撃つ場合は、解決した同じコマンド内で `ai image` を続けて並べる（別の Bash 呼び出しに分けると環境変数が引き継がれず、毎回キー解決し直しになる）。
+- **出力は `<モデル名スラッグ>-<runId>-<連番>.<ext>` で自動命名**される（例: `gemini-2.5-flash-image-mr3cwst4-1.png`）。モデル名がファイル名に最初から入るので、撃ち比べても素性がロストしない（旧 CLI 時代の手動 `mv` プレフィックス付けは不要になった）。
+- 同時に **`meta-<runId>.json`** が出力フォルダに書かれる（プロンプト・パラメータ・モデルごとの生成ファイル一覧・usage）。後から「どのプロンプトで出した画像か」を追える。
+- 出力先は任意（コミットしたくない実験用なら `.gitignore` に逃がす）。
+- 複数枚は `-n`、複数モデル比較は `-m a,b` で1コマンドに収まる（モデル間は並列実行、片方が失敗しても他は続行してエラーは個別報告）。
+- 生成画像の目視評価は Read ツールで開いて行う（捏造しない）。ただし重い生成ループはサブエージェントに逃がし、本体 context に画像 Read を溜めない運用のプロジェクトではそれに従う。
 
 ### 生成後は出力フォルダを開く（必須）
 
@@ -62,41 +60,21 @@ ai image "プロンプト" \
 open out/
 ```
 
-- `-o` にファイルパスを直接渡した場合も、開くのは**そのファイルの親ディレクトリ**（`open "$(dirname <path>)"`）。画像単体を `open` するとビューアが枚数分立ち上がるため、フォルダで開く。
-- 複数ディレクトリに出力した場合は、それらの**共通の親ディレクトリ**を1回だけ開く（`open` 連打でウィンドウを散らかさない）。
+- 画像単体を `open` するとビューアが枚数分立ち上がるため、フォルダで開く。複数ディレクトリに出力した場合は、それらの**共通の親ディレクトリ**を1回だけ開く（`open` 連打でウィンドウを散らかさない）。
+- Claude が先に評価コメントを書くとユーザーの印象を誘導するため、**`open` が先、目利きが後**。
 
-### 生成物にモデル名を残す（必須）
-
-複数モデルを撃ち比べると、後で「どの画像がどのモデルで出たか」を見失う。ai-cli の自動命名（`aitxt-<hash>.png` 等）にはモデル名が入らず、**PNG メタにモデル名が残らないゲートウェイ／モデルもある**（実際に前ベスト画像の素性が後から特定できず、メタを掘って解像度から逆算する羽目になった）。だから生成物のファイル名にモデル名を残す。
-
-- 生成が終わったら、出力フォルダの PNG にモデル名プレフィックスを付ける（短いが一意な識別子）:
-
-```bash
-cd <出力フォルダ>
-for f in *.png; do case "$f" in imagen4-*) ;; *) mv "$f" "imagen4-$f";; esac; done
-```
-
-- プレフィックス例: `gemini25flash-` / `imagen4-` / `imagen4ultra-` / `gpt-image-` 等。複数モデルを同じフォルダに撃ち比べても、`ls` した瞬間に素性が割れる。`case` で二重付与を防ぐこと。
-- 念のため PNG メタにも残したいときは `magick mogrify -set comment "model=<id>" *.png`（任意）。
-
-## 主要フラグ（`ai image --help` / ai-cli 0.3.1 で確認）
-
-フラグはバージョンで増減する。**実行前に `ai image --help` で都度確認する**のが確実（下表は 0.3.1 時点）。
+## フラグ一覧（gen-image.mjs）
 
 | フラグ | 意味 |
 |---|---|
-| `-m, --model` | `creator/model-name`。カンマ区切りでマルチモデル比較 |
-| `-o, --output` | ファイルパス or **ディレクトリ**。dir 指定で `<生成ID>[-<連番>].png`（`aitxt-<hash>.png` 等）に自動命名。固定名はファイルパス直指定 |
-| `-i, --image` | 参照画像（パス or URL）。繰り返し指定可（0.3.x で利用可） |
-| `-n, --count` | モデルあたり生成枚数（default 1） |
-| `--size` | 例 `1024x1024`（ピクセル直指定） |
-| `--aspect-ratio` | 例 `16:9`（**モデルが無視することがある→罠リスト参照**） |
-| `--quality` | `standard` / `hd` |
-| `--style` | 例 `vivid` / `natural` |
-| `-q, --quiet` | 進捗出力を抑制（Bash ツール経由では付ける） |
-| `--no-preview` | インラインプレビューを無効化（Bash ツール経由では付ける） |
-| `-p, --concurrency` | 並列生成数（default 4） |
-| `--json` | メタデータを JSON 出力 |
+| `-m, --model` | `creator/model-name`。カンマ区切りでマルチモデル比較（default: `google/gemini-2.5-flash-image`） |
+| `-n, --count` | モデルあたり生成枚数（default 1）。gemini 系は1枚ずつ直列で n 回呼ぶ |
+| `--aspect-ratio` | 例 `16:9`。**gemini 系にも効く**（providerOptions の `imageConfig` で転送。実測 2026-07-02: gemini=1344×768 / imagen=1408×768） |
+| `--size` | 例 `1024x1024`。**画像専用モデルのみ**（gemini 系は非対応 → aspect-ratio を使う） |
+| `--seed` | 画像専用モデルのみ（モデル対応時） |
+| `-o, --output` | 出力ディレクトリ（default: `out`） |
+| `-i, --image` | 参照画像パス。繰り返し指定可（**gemini 系のみ**。画像専用モデルは非対応） |
+| `--mode` | `llm` / `image`。モデル種別の自動判定（gemini 系→llm、他→image）を上書き |
 
 ## モデル選定とコスト
 
@@ -104,8 +82,15 @@ for f in *.png; do case "$f" in imagen4-*) ;; *) mv "$f" "imagen4-$f";; esac; do
 
 - **デフォルトからモデルを変える前は、必ずユーザーに確認する**（コストと挙動が変わるため）。
 - 議論・目視評価の中で「これはモデル起因の品質問題だ」と判断したときに、上位モデルへ上げる/変える候補: `google/gemini-3-pro-image`（高品質）/ `google/imagen-4.0-{fast,generate,ultra}-001` / `openai/gpt-image-{1,2,1.5}` / `xai/grok-imagine-image`。
-- 全モデル一覧は `ai models` で確認（現在39個）。
+- 対応モデル一覧は https://vercel.com/ai-gateway/models?type=image （Image Gen フィルタ）で確認。
+
+## 実装メモ（スクリプトの中身を触るとき）
+
+- 2経路: gemini 系（`google/gemini-*`）は `generateText` ＋ `providerOptions: { google: { responseModalities: ["IMAGE","TEXT"], imageConfig: { aspectRatio } } }` で `result.files` から回収。画像専用モデル（imagen / bfl / gpt-image / grok 等）は `generateImage`（AI SDK v6 で正式エクスポート）で `result.images` から回収。
+- 判定は `google/gemini-` プレフィックスのヒューリスティック。新種のマルチモーダル LLM が来たら `--mode llm` で逃がすか判定を足す。
 
 ## 罠リスト（実証済み）
 
-- **aspect-ratio が効かないことがある（モデル依存）**: `--aspect-ratio` フラグ自体は存在する（v0.2.1）が、実測（2026-06-09）では gemini 側が無視して固定サイズを返した（`gemini-2.5-flash-image`=1:1 1024×1024 / `gemini-3-pro-image`≒16:9 1408×768）。モデル・CLI バージョンで変わりうるので、**比率が重要なら使用時に `--size` 直指定で都度検証する**。
+- **旧 CLI の「gemini が aspect-ratio を無視して 1:1 1024×1024 固定」問題は直叩きで解消済み**（2026-07-02 実測）。ただし比率がクリティカルな用途では、生成後に `sips -g pixelWidth -g pixelHeight` で都度確認するのが確実（モデル側の対応比率は世代で変わる）。
+- gemini 系に `--size` は効かない（aspect-ratio を使う）。
+- gemini 系が画像を返さずテキストだけ返すことが稀にある（プロンプトが安全フィルタ等に触れた場合など）。スクリプトは `warn: <model> は画像を返さなかった` を出すので、プロンプトを変えて再試行する。

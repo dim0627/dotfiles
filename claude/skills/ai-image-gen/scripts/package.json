@@ -1,0 +1,11 @@
+{
+  "name": "ai-image-gen-scripts",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ai": "^6.0.0"
+  }
+}
