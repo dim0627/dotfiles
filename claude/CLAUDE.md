@@ -24,8 +24,7 @@
 
 ## ブラウザ操作
 
-- 原則 `agent-browser`（https://agent-browser.dev/ ）を Bash 経由で実行。ref ベースのスナップショット（`@e1` 等）でトークン効率が高い。使い方に迷ったら `agent-browser skills get core --full`
-- Playwright 資産の保守・E2E など特別な事情がある場合のみ `playwright-cli` を使用可。Playwright MCP は使わない
+- ブラウザ操作は `agent-browser` を第一選択。Playwright 資産の保守・E2E など特別な事情がある場合のみ `playwright-cli` を使用可。Playwright MCP は使わない
 
 ## 人へのレス・コメント（GitHub / Linear / Notion 等）
 
