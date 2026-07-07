@@ -119,7 +119,7 @@ gh api user --jq '.login'
 
 ### 7. コメントの取得
 
-review-pr スキルと同様の2段階取得を行う:
+address-review スキルと同様の2段階取得を行う:
 
 **第1段階** — ID とメタデータ:
 ```bash
@@ -178,5 +178,5 @@ gh pr view {number} --json comments --jq '.comments[] | {author: .author.login, 
 ## 注意事項
 
 - このスキルは状況報告のみ。コード修正やコミットは行わない
-- 修正が必要な場合は `/review-pr <番号>` や `/fix-ci` への誘導を提案する
+- 修正が必要な場合は `/address-review <番号>` や `/fix-ci` への誘導を提案する
 - `--with-comments` なしでもコメント「件数」は表示する（中身は見ない）

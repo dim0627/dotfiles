@@ -1,6 +1,6 @@
 ---
-name: review-pr
-description: PRのレビューコメントを取得・分類し、対応計画を立てる
+name: address-review
+description: PRのレビューコメントを取得・分類し、対応計画を立てて修正する
 user-invocable: true
 allowed-tools: Bash(gh pr view*), Bash(gh api repos*), Bash(git log*), Bash(gh repo view*), Bash(git add *), Bash(git commit *), Bash(git push*), Bash(git status*), Bash(git diff*), Read, Edit, Grep, Glob, Agent
 ---
