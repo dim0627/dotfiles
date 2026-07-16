@@ -80,6 +80,10 @@
           {
             "type": "command",
             "command": "tmux set-option -uw -t \"$TMUX_PANE\" @claude 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "echo '<independence-reminder>同意・賞賛から入らず、結論か事実から入る。同意するなら独立した根拠を添え、疑義があれば先に述べる。ユーザーの示唆した答えや押し返しに合わせて結論を曲げない（正しければ立場を維持、間違いなら理由を示して撤回する）。</independence-reminder>'"
           }
         ]
       }
