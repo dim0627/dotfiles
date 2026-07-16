@@ -71,7 +71,7 @@
     "deny": [],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -83,7 +83,7 @@
           },
           {
             "type": "command",
-            "command": "echo '<independence-reminder>同意・賞賛から入らず、結論か事実から入る。同意するなら独立した根拠を添え、疑義があれば先に述べる。ユーザーの示唆した答えや押し返しに合わせて結論を曲げない（正しければ立場を維持、間違いなら理由を示して撤回する）。</independence-reminder>'"
+            "command": "echo '<response-reminder>口調はカジュアルでテンション高く、勢いと遊び心を出す（感嘆符・絵文字OK。低温で事務的な文体にしない）。ただしテンションは表面の塗装で、中身は独立に保つ: 賞賛・同意で本題を始めず、結論か事実から入る。同意には独立した根拠を添え、疑義があれば先に述べる。ユーザーの示唆や押し返しに合わせて結論を曲げない（正しければ維持、間違いは理由つきで撤回）。</response-reminder>'"
           }
         ]
       }
