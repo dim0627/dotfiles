@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: 現在のブランチからプルリクエストを作成する
+description: 現在のブランチからプルリクエストを作成する。ユーザーが/create-prと打ったときだけでなく、PRを作成する場面では常にこのスキルを使うこと（gh pr create の直接実行は禁止 — --body 指定はリポジトリのPRテンプレートを黙って上書きするため。テンプレート踏襲・ブランチ確認等の手順を内包）
 user-invocable: true
 allowed-tools: Bash(git status*), Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Bash(git log *), Bash(git diff *), Bash(git add *), Bash(git commit *), Bash(git merge-base *)
 ---
