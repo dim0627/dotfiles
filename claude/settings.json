@@ -71,7 +71,7 @@
     "deny": [],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "fable",
   "hooks": {
     "UserPromptSubmit": [
       {
