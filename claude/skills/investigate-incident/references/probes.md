@@ -1,0 +1,180 @@
+# 観測手段リファレンス
+
+インシデント調査で叩く先の一覧。**必要になった節だけ読む**（全部読むと初動が遅くなる）。
+
+共通の原則：
+
+- **環境名・プロジェクト名・リソース名を決め打ちしない。** 必ず一覧を取得して実在する値から選ぶ。決め打ちの最悪の壊れ方は、クエリが0件を返して**障害中のシステムを「異常なし」と報告する**こと
+- **取れなかったものは推測で埋めない。** 「取得失敗」と書く。観測の欠落自体が報告すべき情報
+- **絶対値より形状。** 「エラーが200件」より「10分前から階段状に増え、今も継続中」の方が原因クラスを絞る
+
+---
+
+## 変更タイムライン（無条件観測・最優先）
+
+障害原因の最大クラスは「直前の変更」。時刻の突き合わせが要なので、**コミット日時を必ず取る**。
+
+```bash
+git log --format='%h %ad %an %s' --date=iso -30
+git log --format='%h %ad %s' --date=iso --since='<障害発生時刻の3時間前>'
+```
+
+デプロイのタイミングはコミット時刻とは別物（マージから反映までのラグ、手動デプロイ、ロールバック）。**コミット履歴だけで「デプロイ相関なし」と結論づけない**。実際のデプロイ時刻は下のプラットフォーム別の節で取る。
+
+コード以外の変更も原因になる。障害の直前に以下が変わっていないかをユーザーに確認する（リポジトリからは見えない）:
+環境変数 / フィーチャーフラグ / 外部SaaSの設定 / DNS / 証明書の更新 / 依存先の計画メンテ
+
+---
+
+## Sentry
+
+MCP: `mcp__sentry__*`（未認証なら `/mcp` で認証してもらう）
+
+### 1. 組織とプロジェクトの解決
+
+`find_organizations()` → `find_projects(organizationSlug)`。
+
+**リポジトリ名と Sentry プロジェクト名は一致しない前提で探す。** monorepo なら1リポジトリが web / api など複数プロジェクトに跨る。リポジトリ内のビルドプラグイン設定に平文で入っていることが多い:
+
+```bash
+grep -rnE --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.next \
+  '(org|project)[[:space:]]*:[[:space:]]*["'"'"']' . | grep -iE 'sentry|org:|project:'
+```
+
+候補が絞れないなら聞く。**推測で1つに決め打ちすると、見落としたプロジェクトの障害が「異常なし」になる。**
+
+### 2. 環境名の特定（決め打ち禁止）
+
+`environment:production` は決め打ちできない。実測例: `production` / `vercel-production` / `prd` / `prod`。実際に届いている値を取る:
+
+```
+search_events(
+  organizationSlug=<org>, projectSlug=<project>, dataset='errors',
+  fields=['environment', 'count()'], sort='-count()', period='24h', limit=20
+)
+```
+
+### 3. 症状の時系列（インシデント調査の主用途）
+
+障害調査で欲しいのは issue 一覧ではなく **「いつ何が増えたか」**。時間軸で集計する:
+
+```
+search_events(
+  organizationSlug=<org>, projectSlug=<project>, dataset='errors',
+  fields=['error.type', 'count()'], sort='-count()',
+  query='environment:<実測値>', period='24h', limit=50
+)
+```
+
+期間を `24h` と `1h` の2通りで取り、**差分を見る**。24h には出ないが 1h に大量に出る型が、今まさに燃えているもの。
+
+障害開始前後で比較したい場合は period を変えて2回取り、新規に出現した型を特定する。**「元から出ていたエラー」と「今回新しく出たエラー」の区別がインシデント調査では決定的。**
+
+### 4. 個別 issue の深掘り
+
+`get_sentry_resource` で開く。**真因は表層メッセージの下に chain されている**ことが多い（`During handling of the above exception, another exception occurred` の下）。表層だけ見て結論を出さない。
+
+ミニファイされている場合（`index.js:100:36977`）はソースマップ未アップロード。行番号は使えないので `culprit` / `transaction` とメッセージ内の具体文字列で `Grep` する。
+
+自力で特定できない場合に限り `analyze_issue_with_seer`（数分かかるので無条件のフォールバックにしない）。
+
+---
+
+## Cloudflare Workers
+
+MCP: `mcp__cf-observability__*`（ログ・メトリクス）、`mcp__cf-builds__*`（ビルド・デプロイ）
+
+ツールのパラメータは呼ぶ前にスキーマを確認する。
+
+### Worker の特定
+
+`workers_list` で一覧を取り、リポジトリの `wrangler.jsonc` / `wrangler.toml` の `name` と突き合わせる:
+
+```bash
+grep -nE '"?name"?[[:space:]]*[:=]' wrangler.jsonc wrangler.toml 2>/dev/null
+```
+
+### ログ・メトリクス
+
+`query_worker_observability` で構造化ログを検索する。使えるフィールド名が分からない場合は先に `observability_keys` でキー一覧、`observability_values` で値の候補を取る。**フィールド名を推測して0件を「異常なし」と読まない。**
+
+見るべきもの: エラー率の時系列 / ステータスコードの分布 / CPU時間・実行時間の変化 / 例外の型
+
+### デプロイ相関（Workers Builds を使っている場合）
+
+`workers_builds_list_builds(workerId=<workers_list で得た ID>)` でビルド履歴。障害発生時刻の直前のビルドを特定し、`workers_builds_get_build` / `workers_builds_get_build_logs` で中身を見る。
+
+**Workers Builds は GitHub/GitLab 連携の CI/CD。`wrangler deploy` を手元や別CIから打っている場合は履歴に出ない。** 空だったら「デプロイなし」ではなく「この経路では追えない」と報告する。
+
+### バインディング先の障害
+
+Workers の障害は本体でなくバインディング先（D1 / KV / R2 / Durable Objects / 外部fetch）のことが多い。`wrangler.jsonc` のバインディング定義を読み、**エラーがどのバインディング経由で出ているか**をログから特定する。
+
+---
+
+## Vercel
+
+CLI で叩く。**フラグの構文をうろ覚えで打たない。`vercel <subcommand> --help` で確認してから実行する**（バージョンによってフラグが変わる）。
+
+```bash
+vercel --version
+vercel ls          # デプロイ一覧（＝デプロイ時刻の取得元）
+vercel inspect <deployment-url>
+vercel logs <deployment-url>
+```
+
+未ログイン・未リンクなら止まる。その場合はユーザーに `! vercel login` を打ってもらう（対話ログインは自分では完了できない）。
+
+デプロイ相関の見方: `vercel ls` で障害発生時刻の直前のデプロイを特定 → 該当デプロイの `vercel inspect` で何が変わったかを見る。**Production への promote は build 時刻と別**なので、promote 時刻の方を症状開始と突き合わせる。
+
+---
+
+## Slack（アラート通知・障害コミュニケーション）
+
+Slack をブラウザ経由で読む。Slack の価値はアラート本文そのものより **「他に誰が何に気づいているか」** と **「通知の時系列」**:
+
+- 同時刻に別チャンネルで別のアラートが鳴っていないか（＝影響範囲が想定より広い証拠）
+- 外部SaaSからのステータス通知が来ていないか（＝自分のコードは無実の証拠）
+- アラートの**発火間隔**（連続か、単発か、収束したか）
+
+**Slack への書き込みは絶対に自動でしない。** 障害対応中の誤投稿は影響が大きい。報告用の文面はドラフト提示までに留め、投稿はユーザー本人が行う。
+
+---
+
+## 外部要因の切り分け（DNS / 証明書 / CDN / プラットフォーム障害）
+
+**アプリのログに何も残っていないタイプの障害はここを疑う。** リクエストがアプリに到達していないことの証拠になる。
+
+```bash
+dig <domain> +short
+dig <domain> CNAME +short
+curl -sS -o /dev/null -w 'http=%{http_code} dns=%{time_namelookup} connect=%{time_connect} tls=%{time_appconnect} total=%{time_total}\n' https://<domain>/
+curl -sSI https://<domain>/ | head -20
+echo | openssl s_client -connect <domain>:443 -servername <domain> 2>/dev/null | openssl x509 -noout -dates
+```
+
+読み方:
+
+- `time_namelookup` だけ長い → DNS
+- `time_appconnect` で失敗 → 証明書 / TLS
+- レスポンスヘッダに CDN のエラーが出る → プラットフォーム側
+- 全部速いのに 5xx → アプリまで到達している。外部要因ではない
+
+プロバイダの障害情報は WebFetch でステータスページを取る。**ステータスページが「All Systems Operational」でも障害を否定しない**（更新が遅れることが常にある）。他に複数の独立した根拠があるかで判断する。
+
+### タイムアウト・ネットワークエラーの読み分け
+
+`Load failed` / `Network error` / タイムアウトは**ホストが自分の管理下かで意味が正反対になる**:
+
+- 外部ホスト・散発 → ユーザー側のネットワーク断。障害ではない
+- **自ドメイン（外部SaaSを自ドメインのCNAMEで配信しているケースを含む）・継続中** → CNAME / 証明書 / CDN の障害。最優先で追う
+
+---
+
+## リソース枯渇の観測
+
+「じわじわ悪化して閾値で崩れる」「再起動で一時回復する」症状はこれ。**単発の値ではなく傾きを見る**（増え続けているか、頭打ちか）。
+
+観測対象: DB接続数と上限 / メモリ使用量 / レート制限のヘッダ（`X-RateLimit-*`、`Retry-After`）/ プラットフォームのクォータ（サブリクエスト数、CPU時間、実行時間の上限）
+
+**上限値とセットで取る。** 使用量だけ見ても枯渇かどうか判定できない。上限が取れないなら「判断不能」と報告する。
