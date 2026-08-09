@@ -31,7 +31,7 @@
 
 ## Web取得・スクレイピング
 
-- HTMLからのデータ抽出・未知ページの構造探索は `ax` CLIを第一選択（生curl・使い捨てパーススクリプト・HTMLへの正規表現は書かない）。使い方詳細は ax スキル参照
+- URL取得は用途を問わず `ax` CLIが入口（生curl・使い捨てパーススクリプト・HTMLへの正規表現は書かない）。疎通確認・APIコールも含む — curl parity（`-X` `-H` `-d` `-u` `-I`）を持ち、引数なしの `ax <url>` が status/ms/headers を返す。使い方詳細は ax スキル参照
 - 使い分け: ページの要約・QAはWebFetch可。JSレンダリング必須のSPAは `agent-browser` へ
 
 ## 人へのレス・コメント（GitHub / Linear / Notion 等）
