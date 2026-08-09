@@ -1,7 +1,7 @@
 SCRIPT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 HOME_DIR := $(HOME)
 
-.PHONY: all brew link link-dotfiles link-claude
+.PHONY: all brew link link-dotfiles link-claude link-agents
 
 all: brew link
 
@@ -10,7 +10,7 @@ brew:
 	brew update
 	brew bundle --file=$(SCRIPT_DIR)Brewfile
 
-link: link-dotfiles link-claude
+link: link-dotfiles link-claude link-agents
 
 link-dotfiles:
 	ln -sf $(SCRIPT_DIR).zshrc $(HOME_DIR)/.zshrc
@@ -34,3 +34,9 @@ link-claude:
 		agent_name=$$(basename "$$agent_file"); \
 		ln -snf "$$agent_file" "$(HOME_DIR)/.claude/agents/$$agent_name"; \
 	done
+
+# skills CLI (npx skills) が管理する外部スキルのロックファイル。
+# 実体は ~/.agents/skills/ で、復元は `npx skills update` に任せる。
+link-agents:
+	mkdir -p $(HOME_DIR)/.agents
+	ln -sf $(SCRIPT_DIR)agents/skill-lock.json $(HOME_DIR)/.agents/.skill-lock.json
