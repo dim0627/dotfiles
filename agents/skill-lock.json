@@ -165,16 +165,6 @@
       "installedAt": "2026-07-30T02:39:15.549Z",
       "updatedAt": "2026-07-30T02:39:15.549Z"
     },
-    "code-review": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "skills/engineering/code-review/SKILL.md",
-      "skillFolderHash": "474a27d46efb1eff9724a29ae1edc9cd8a75d911",
-      "pluginName": "mattpocock-skills",
-      "installedAt": "2026-07-30T02:39:15.549Z",
-      "updatedAt": "2026-07-30T02:39:15.549Z"
-    },
     "codebase-design": {
       "source": "mattpocock/skills",
       "sourceType": "github",
