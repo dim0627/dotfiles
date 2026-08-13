@@ -22,6 +22,7 @@
       "Bash(git stash *)",
       "Bash(git rm *)",
       "Bash(git mv *)",
+      "Bash(git rebase:*)",
       "Bash(gh pr *)",
       "Bash(gh issue view *)",
       "Bash(gh issue list *)",
@@ -73,6 +74,18 @@
   },
   "model": "opus",
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh $HOME/.claude/gcloud-auth-check.sh --hook",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "matcher": "",
