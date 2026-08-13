@@ -160,7 +160,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "sh /Users/tsujidaisuke/.claude/statusline-command.sh"
+    "command": "sh $HOME/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
     "feature-dev@claude-plugins-official": true,
