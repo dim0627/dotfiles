@@ -25,6 +25,7 @@ link-claude:
 	ln -sf $(SCRIPT_DIR)claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md
 	ln -sf $(SCRIPT_DIR)claude/settings.json $(HOME_DIR)/.claude/settings.json
 	ln -sf $(SCRIPT_DIR)claude/statusline-command.sh $(HOME_DIR)/.claude/statusline-command.sh
+	ln -sf $(SCRIPT_DIR)claude/gcloud-auth-check.sh $(HOME_DIR)/.claude/gcloud-auth-check.sh
 	@for skill_dir in $(SCRIPT_DIR)claude/skills/*/; do \
 		skill_name=$$(basename "$$skill_dir"); \
 		ln -snf "$$skill_dir" "$(HOME_DIR)/.claude/skills/$$skill_name"; \

@@ -62,4 +62,27 @@ if [ -n "$tokens" ]; then
   fi
 fi
 
+# gcloud CLI 認証（失効しているときだけ赤で出す）
+#
+# ここでは gcloud を直接叩かない。実測で print-access-token は 0.6〜1.0 秒かかり、
+# statusline は毎ターン走るため全ターンにその遅延が乗ってしまう。判定は
+# gcloud-auth-check.sh に任せ、ここはキャッシュを読むだけに留める。
+# キャッシュが古い場合だけ裏で更新を投げ、結果は次のターンの表示に反映される。
+gcloud_cache="${XDG_CACHE_HOME:-$HOME/.cache}/claude/gcloud-auth-status"
+gcloud_checker="$HOME/.claude/gcloud-auth-check.sh"
+
+if [ -f "$gcloud_checker" ]; then
+  # 5分より古ければ裏で更新。先に touch しておくことで、更新の完了を待つ間に
+  # 後続のターンが同じ判定を重ねて起動するのを防ぐ。
+  if [ ! -f "$gcloud_cache" ] || [ -n "$(find "$gcloud_cache" -mmin +5 2>/dev/null)" ]; then
+    mkdir -p "$(dirname "$gcloud_cache")"
+    touch "$gcloud_cache"
+    (sh "$gcloud_checker" >/dev/null 2>&1 &)
+  fi
+  # 空や未知の値のときは何も出さない（判定できていない状態を「正常」とも「異常」とも言わない）
+  if [ "$(cut -d' ' -f1 "$gcloud_cache" 2>/dev/null)" = "expired" ]; then
+    line="$line $(printf "\033[31mgcloud✗\033[0m")"
+  fi
+fi
+
 printf "%b" "$line"
