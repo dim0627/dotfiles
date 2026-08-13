@@ -139,3 +139,6 @@ if [ -f '/Users/tsujidaisuke/google-cloud-sdk/completion.zsh.inc' ]; then . '/Us
 
 # bun completions
 [ -s "/Users/tsujidaisuke/.bun/_bun" ] && source "/Users/tsujidaisuke/.bun/_bun"
+
+# turborepo
+export TURBO_UI=1
