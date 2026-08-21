@@ -14,9 +14,13 @@
 > d. 75: Highly confident. The agent double checked the issue, and verified that it is very likely it is a real issue that will be hit in practice. The existing approach in the PR is insufficient. The issue is very important and will directly impact the code's functionality, or it is an issue that is directly mentioned in the relevant CLAUDE.md.
 > e. 100: Absolutely certain. The agent double checked the issue, and confirmed that it is definitely a real issue, that will happen frequently in practice. The evidence directly confirms this.
 
-## カットライン
+## このスケールの使いどころ
 
-**80 未満は捨てる。** 50 は「本物だが nitpick」と定義されているので、この線は nitpick を落とすところに引かれている。指摘が少ないことを心配して線を下げると、拾いたかったものより先に nitpick が戻ってくる。
+**確度は「出すかどうか」ではなく「どの札を付けるか」だけを決める。** 出すかどうかは SKILL.md の3つの足切り（事実判定が誤り / 対応が書けない / 差分が作った問題でない）で決める。
+
+このスケールは刻みの文言の中に**重要度を混ぜている**点に注意する。50 は「本物だと確認できた**が** nitpick かもしれず、この変更の中では重要でない」と定義されているので、**検証済みで正しいが軽い指摘は構造上 50 を超えられない**。ここに 80 の一律カットを当てると、「このコメントは言い過ぎだから緩める」「既存ヘルパと重複している」のような、正しくて直すのが一瞬の指摘が必ず全滅する。だから採点者には確度と別に**事実判定**（重要度を考慮しない真偽）を出させ、足切りにはそちらを使う。
+
+50 未満は札に関係なく出さない。裏が取り切れていないものを混ぜると、正しい指摘まで巻き添えで読まれなくなる。
 
 ## 出典
 
