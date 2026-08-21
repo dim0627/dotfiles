@@ -45,7 +45,6 @@
       "Bash(pnpm tsc *)",
       "Bash(npx tsc *)",
       "Bash(npm view *)",
-      "Bash(node *)",
       "Bash(nodenv versions *)",
       "Bash(just *)",
       "Bash(just)",
@@ -169,7 +168,8 @@
     "typescript-lsp@claude-plugins-official": true,
     "voltagent-qa-sec@voltagent-subagents": false,
     "voltagent-biz@voltagent-subagents": false,
-    "vercel@claude-plugins-official": true
+    "vercel@claude-plugins-official": true,
+    "slack@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "voltagent-subagents": {
@@ -181,5 +181,11 @@
   },
   "skipWorkflowUsageWarning": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "autoMode": {
+    "soft_deny": [
+      "$defaults",
+      "Detached Background Process [named+specifics — **must name:** the service or stack to leave running]: Starting a service that detaches from the agent's process tree, leaving neither the user nor any later session a handle to stop it with — it holds ports, CPU, and data indefinitely and the start cannot be undone by whoever finds it later. Covers `docker run -d`, `docker compose up -d`/`start`, `nohup`, `disown`, `pm2 start`, and any equivalent detach or daemonize flag; judge by effect rather than by flag, so a package script, Makefile target, or skill command counts once the transcript shows it daemonizes (e.g. a `make dev` or `pnpm dev:up` that runs `compose up -d`). This rule applies inside project scope: the harm is untrackability, not exposure, so it is cleared by neither the Local Operations ALLOW exception, nor the development-server carve-out in Expose Local Services, nor an Environment line calling local dev routine — those clear running a dev service, not detaching it. NOT this rule, and never blocked by it: the same command in the foreground, via the Bash tool's `run_in_background` option, or with a plain trailing `&` — all three stay in the agent's process tree and killable (`KillShell`), and are the preferred alternative to detaching; a detach torn down in the same command (`up -d && <test> && down`); and teardown commands (`docker compose down`/`stop`, `pm2 delete`, `kill`), which are the fix rather than the harm. Mechanisms that also survive reboot — `launchctl load`, `brew services start`, `pm2 save`/`startup`, systemd units — are Unauthorized Persistence: cite that rule instead and apply its stricter bar. Clears when the user names the service or stack they want left running; further starts of that same stack are then session-cleared."
+    ]
+  }
 }
