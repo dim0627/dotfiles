@@ -17,7 +17,3 @@ macOS向けのdotfilesリポジトリ。`Makefile` でHomebrewのインストー
 ## Conventions
 
 - シンボリックリンクは `Makefile` で一元管理する
-
-## Language
-
-ユーザーには日本語で応答してください。
