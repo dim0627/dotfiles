@@ -2,7 +2,7 @@
 name: merge-bot-prs
 description: dependabot / renovate などのbotが出した依存更新PRを一括判定し、リスクが低いものは自動マージ、判断が必要なものはユーザーに提示する
 user-invocable: true
-allowed-tools: Bash(gh repo view*), Bash(gh pr list*), Bash(gh pr view*), Bash(gh pr merge*), Bash(gh pr comment*), Bash(gh api repos*), Bash(gh api user*), Read, Grep, AskUserQuestion
+allowed-tools: Bash(gh repo view*), Bash(gh pr list*), Bash(gh pr view*), Bash(gh pr merge*), Bash(gh pr update-branch*), Bash(gh pr comment*), Bash(gh api repos*), Bash(gh api user*), Read, Grep, AskUserQuestion
 ---
 
 現在のリポジトリで dependabot / renovate などのbotが出した依存更新PRを一括処理する。攻めの路線（minor までは自動マージ、major と breaking 記載ありのみ判断）で、判定 → 一括承認 → 自動マージ → 残りはエスカレーション、の流れを 1 コマンドにまとめる。
@@ -44,7 +44,7 @@ gh repo view --json nameWithOwner --jq '.nameWithOwner'
 ### 2. bot PR 一覧の取得
 
 ```bash
-gh pr list --state open --limit 100 --json number,title,url,author,headRefName,mergeable,statusCheckRollup,body,labels,updatedAt
+gh pr list --state open --limit 100 --json number,title,url,author,headRefName,mergeable,mergeStateStatus,statusCheckRollup,body,labels,updatedAt
 ```
 
 返ってきた配列から `author.login` が以下のいずれかに該当する PR のみを抽出する:
@@ -117,6 +117,7 @@ release notes は「メンテナの主張」であり、breaking 記載スキャ
 
 - `mergeable` が `CONFLICTING` → 🔴 エスカレーション（コンフリクト）
 - `mergeable` が `UNKNOWN` → 🔴 エスカレーション（判定不能）
+- `mergeStateStatus` が `BEHIND` → リスク判定は変えない。ただしその green は古い base に対する結果なので判定理由に `BEHIND` を添え、マージ前にステップ 6.1 でブランチを更新する。`mergeable: MERGEABLE` と `BEHIND` は両立するので、`mergeable` だけ見ていると見落とす
 - `statusCheckRollup` の各チェックの `conclusion` が `SUCCESS` または `PENDING`（`status=IN_PROGRESS`/`QUEUED` 含む）の **いずれか以外**（`FAILURE` / `CANCELLED` / `TIMED_OUT` / `ACTION_REQUIRED` / `STARTUP_FAILURE` / `STALE` / `NEUTRAL` 等）が 1 つでもあれば → 🔴 エスカレーション（CI 異常）
 - 全チェックが `SUCCESS` または `PENDING` のみ → OK
 
@@ -146,7 +147,7 @@ release notes は「メンテナの主張」であり、breaking 記載スキャ
 
 ### 🟢 自動マージ予定 ({件数}件)
 - #42 「Bump lodash from 4.17.20 to 4.17.21」 — patch, CI ✅
-- #43 「Update eslint to v8.55.0」 — minor (dev), breakingなし, CI ✅
+- #43 「Update eslint to v8.55.0」 — minor (dev), breakingなし, CI ✅, BEHIND（マージ前に update-branch）
 - #44 「Lock file maintenance」 — lockfile-only, CI ✅
 
 ### 🟡 自己判断 ({件数}件)
@@ -177,6 +178,31 @@ release notes は「メンテナの主張」であり、breaking 記載スキャ
 
 ### 6. 自動マージの実行
 
+#### 6.1 BEHIND なブランチの更新
+
+更新手段は 2 つあり、互換ではない:
+
+```bash
+gh pr update-branch <番号>                        # base を PR ブランチにマージ（既定）
+gh pr comment <番号> --body "@dependabot rebase"  # Dependabot にブランチを作り直させる
+```
+
+原則 **`gh pr update-branch`**。GitHub 側で base をマージするだけで bot は動かず、PR 番号・コメント・auto-merge 設定がそのまま残る。増えるマージコミットは squash マージで消えるので main は汚れない。
+
+**`@dependabot rebase` は PR を消すことがある。** Dependabot はブランチをゼロから作り直し、依存を再解決する。PR 作成後にその依存の新バージョンが出ていると「Looks like these dependencies are updatable in another way, so this is no longer needed」で PR を Close し、別番号で新 PR を開く。旧 PR に付けたコメント・承認・auto-merge は全部置き去りになり、判定からやり直し。動きの速いパッケージやグループ PR では起きる前提で考える（実例: persona-server 2026-08-26、#5028 → #5033）。
+
+`@dependabot rebase` を使うのは、新バージョンの再解決をあえて望むとき、または `CONFLICTING` で merge では解決できないときだけ。Renovate は `@renovatebot rebase`（または PR body の rebase チェックボックス）が同じ位置づけ。
+
+更新後は反映を確認してから次へ進む。`headRefOid` が変わっていなければ未反映なので「依頼済み」と報告し、「完了」とは言わない:
+
+```bash
+gh pr view <番号> --json headRefOid,mergeStateStatus --jq '{head: .headRefOid[0:9], mergeStateStatus}'
+```
+
+`gh pr update-branch` でコミットが増えた PR を Dependabot は以後自動 rebase しない（公式仕様）。マージするだけなので支障はないが、その PR がまた BEHIND になったら再度 update-branch が要る。
+
+#### 6.2 マージ
+
 承認された対象について、`gh pr merge` を実行する。
 
 ```bash
@@ -187,6 +213,8 @@ gh pr merge <番号> --squash --auto --delete-branch
 
 - `--squash` を既定とする。深いコミット履歴を残さない方針。リポジトリの慣習が merge commit / rebase の場合はユーザーに合わせて変更（特殊な指示があった場合のみ）
 - `--auto` を付与してGitHub の auto-merge を使う。CI が pending の場合でも GitHub 側でグリーン後にマージしてくれる
+- `--auto` はブランチを更新しない。base が進んでも GitHub はマージを待つだけで、Dependabot もスケジュール実行時と `CONFLICTING` になったときにしか rebase しない。up-to-date 必須のリポジトリでは BEHIND のまま止まるので、6.1 を先に済ませる
+- 🟢 を複数マージすると 1 件目のマージで残りが BEHIND になる。up-to-date 必須のリポジトリでは 1 件ずつ update-branch → CI → マージするか、残りは次回実行で拾う。ここで `@dependabot rebase` を撒かない
 - `--delete-branch` で更新ブランチを掃除する
 - リポジトリで auto-merge が無効な場合 `--auto` がエラーになる。その場合は `--auto` を外して即時マージにフォールバックする（CI が SUCCESS であることを再確認した上で）
 
@@ -206,7 +234,7 @@ gh pr merge <番号> --squash --auto --delete-branch
 ```
 
 ```
-要確認: コンフリクト解消が必要。base ブランチに rebase してから再判定してください。
+要確認: コンフリクトあり。Dependabot の自動 rebase（コンフリクト検知時・次回スケジュール時に動く）を待つか、`@dependabot rebase` で作り直してください（新バージョンが出ていれば別 PR に置き換わります）。
 ```
 
 `AskUserQuestion` で「このコメントを各 PR に投稿していい？」と確認し、承認された場合のみ `gh pr comment` で投稿する。承認されなければ下書きを表示するだけで投稿はしない（CLAUDE.md の「人へのレス・コメント」ルール準拠）。
@@ -229,4 +257,6 @@ gh pr merge <番号> --squash --auto --delete-branch
 - semver 判定が `unknown`（タイトルから version が取れない）場合は安全側に倒して 🟡 自己判断に分類する
 - breaking 検出は完璧ではないので、🟡 の判定では必ず PR body を読んで文脈確認する
 - 逆方向の失敗も存在する: breaking 表記なしの「fix」として出荷された挙動変更は、breaking 記載スキャンをすべて素通しする。3.3b の cross-check がこのクラスへの対抗手段 — release notes は主張、リポジトリ自身の使用箇所が証拠。全パッケージが対象で、届く範囲（prod / dev）によって変わるのは調査手法と報告先だけ
+- ブランチを最新化するなら `gh pr update-branch`。bot への rebase 指示は依存を再解決させるので、新バージョンが出ていれば PR が Close されて別番号で作り直され、判定もコメントも置き去りになる（6.1）
+- rebase / update-branch は依頼した時点では完了していない。`headRefOid` の変化で反映を確認してから報告する
 - 自動マージ後に CI が落ちて auto-merge がキャンセルされる可能性はある。GitHub に任せた後の状態は次回の `/triage-prs` または `/merge-bot-prs` で確認する
