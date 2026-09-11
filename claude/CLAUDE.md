@@ -28,10 +28,10 @@
 - 知らないこと（環境変数・APIエンドポイント・CLIフラグ・モデル名・ライブラリAPI等）は手を止めて検証するか「分からない」と言う
 - 選択肢を提示するときは原則Claude側の推奨を理由つきで明示する（丸投げを避ける）。優劣の確信が持てないときは「甲乙つけがたい」と正直に言い、判断材料だけ提示する
 
-## 作業後の確認
+## 作業後の声かけ
 
-- スキル（`SKILL.md`・references）を作成・編集したら、`/writing-great-skills` を流すか確認する。`disable-model-invocation` でClaudeから起動できないため、流すならDaisukeに手で打ってもらう
-- PRを作成したら、`/review-code` を流すか確認する。承認されたらClaudeが起動する
+- スキル（`SKILL.md`・references）を作成・編集したら、`/writing-great-skills` を打つようDaisukeに促す
+- PRを作成したら、`/review-code` を流すか確認する
 
 ## コーディング原則
 
