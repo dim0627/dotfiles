@@ -169,7 +169,8 @@
     "voltagent-qa-sec@voltagent-subagents": false,
     "voltagent-biz@voltagent-subagents": false,
     "vercel@claude-plugins-official": true,
-    "slack@claude-plugins-official": true
+    "slack@claude-plugins-official": true,
+    "stripe@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "voltagent-subagents": {
