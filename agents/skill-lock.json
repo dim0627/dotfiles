@@ -534,6 +534,15 @@
       "pluginName": "mattpocock-skills",
       "installedAt": "2026-09-15T05:54:50.747Z",
       "updatedAt": "2026-09-15T05:55:19.911Z"
+    },
+    "typesafe-ai": {
+      "source": "typesafe-ai/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/typesafe-ai/skills.git",
+      "skillPath": "skills/typesafe-ai/SKILL.md",
+      "skillFolderHash": "678c375b883794bf4292715a43acbba5c84681aa",
+      "installedAt": "2026-09-20T07:35:11.694Z",
+      "updatedAt": "2026-09-20T07:35:11.694Z"
     }
   },
   "dismissed": {
@@ -541,14 +550,13 @@
   },
   "lastSelectedAgents": [
     "amp",
-    "antigravity",
-    "antigravity-cli",
     "cline",
     "codex",
     "cursor",
-    "deepagents",
+    "droid",
     "gemini-cli",
     "github-copilot",
+    "kilo",
     "kimi-code-cli",
     "opencode",
     "warp",
