@@ -37,7 +37,9 @@ fi
 tmp_file="$cache_file.$$"
 printf '%s %s\n' "$state" "$(date +%s)" >"$tmp_file" && mv -f "$tmp_file" "$cache_file"
 
+# ユーザーはセッション開始直後に再ログインすることが多く、この通知は数秒で古くなる。
+# 開始時点のスナップショットだと明示し、伝える直前に再判定させる。
 if [ "${1:-}" = "--hook" ] && [ "$state" = "expired" ]; then
 	account=$(gcloud config get-value account 2>/dev/null)
-	printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"gcloud CLI の認証が切れている（アカウント: %s）。gcloud / bq などを使う作業に入る前に、ユーザー本人による gcloud auth login での再認証が必要だと伝えること。再認証コマンドは代理実行せず、提示するに留める。"}}\n' "${account:-unknown}"
+	printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"セッション開始時点の判定では gcloud CLI の認証が切れていた（アカウント: %s）。ユーザーはこの直後に再ログインすることが多いので、この判定をそのまま伝えないこと。gcloud / bq などを使う作業に入るときだけ、直前に sh $HOME/.claude/gcloud-auth-check.sh を実行し、$HOME/.cache/claude/gcloud-auth-status の先頭が expired のままならユーザー本人による gcloud auth login での再認証を提示する。再認証コマンドは代理実行しない。gcloud を使わない作業では話題にしない。"}}\n' "${account:-unknown}"
 fi
