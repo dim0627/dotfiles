@@ -2,7 +2,7 @@
 name: brief-pr
 description: 他人のPRのブリーフを作る。レビュー前に、意図（本文・チケット・前段PR）と変更の地図（コールスタック）をまとめ、本文の主張をコードと照合する。「PR読み解いて」「このPRの意図は」で起動。
 user-invocable: true
-allowed-tools: Bash(gh pr view*), Bash(gh pr diff*), Bash(gh pr checks*), Bash(gh issue view*), Bash(gh api repos*), Bash(ghq list*), Bash(git fetch*), Bash(git show*), Bash(git grep*), Bash(git log*), Bash(git diff*), Read, Grep, Glob
+allowed-tools: Bash(gh pr view*), Bash(gh pr diff*), Bash(gh pr checks*), Bash(gh issue view*), Bash(gh api repos*), Bash(ghq list*), Bash(git fetch*), Bash(git show*), Bash(git grep*), Bash(git log*), Bash(git diff*), Read, Grep, Glob, Write, Artifact
 ---
 
 # brief-pr
@@ -11,7 +11,7 @@ allowed-tools: Bash(gh pr view*), Bash(gh pr diff*), Bash(gh pr checks*), Bash(g
 
 ブリーフの全文は**出典**か**推測**のどちらかに属する。出典は引用元（PR本文・チケット・コミット・`file:line`）を添え、推測は推測と明記する。意図が書かれていない箇所を推測で埋めて断定すると、レビュアーは作者と違う前提でコードを読むことになる。
 
-結果は会話に返す。PR・チケットへの書き込みはしない。
+結果は Artifact（claude.ai 上の非公開ページ）で返す。PR・チケットへの書き込みはしない。
 
 ## 入力
 
@@ -22,7 +22,7 @@ PRのURLか番号。無ければどのPRか聞いてから始める。
 ### 1. 意図を集める
 
 ```bash
-gh pr view <PR> --json title,body,author,baseRefName,headRefName,commits,files,comments,reviews,closingIssuesReferences
+gh pr view <PR> --json url,headRefOid,title,body,author,baseRefName,headRefName,commits,files,comments,reviews,closingIssuesReferences
 gh pr checks <PR>
 ```
 
@@ -58,26 +58,23 @@ gh pr checks <PR>
 
 **完了条件**: 変更ファイルが全部、どれかの経路に載っているか付随的な変更に分類されている。振る舞いについての主張がそれぞれ「一致（`file:line`）」「不一致」「未確認」のどれかになっている。
 
-### 4. ブリーフを返す
+### 4. ブリーフを Artifact で返す
 
-```
-## PR #<N> ブリーフ
+ブリーフを HTML ページに書き、Artifact として公開する。ファイルはスクラッチパッドの `brief-pr-<repo>-<N>.html`。同じセッションで同じPRを作り直すときは同じパスで再公開し、URL を保つ。
 
-### 何を・なぜ
-<一文。出典つき>
+ページの節は次の順。小さなPRなら節を省いてよい。ただし「何を・なぜ」と地図は省かない。
 
-### 意図の出典
-- <チケット / 前段PR / 本文>: <要旨>（本文と実装が食い違っていればここで書く）
+- **ヘッダ**: PR番号・タイトル（PRへのリンク）・作者・base ← head・CI の結果
+- **何を・なぜ**: 一文。出典つき
+- **意図の出典**: チケット・前段PR・本文ごとの要旨。読めなかったものは理由つき
+- **変更の地図**: 入口→変更ノードのツリー。変更ノードを強調し、変更前→変更後の振る舞いを一言添える。付随的な変更は末尾にまとめる
+- **照合**: 主張ごとに、出典・判定（一致 / 不一致 / 未確認）・根拠の `file:line`。不一致を先頭に並べる
+- **押さえる点**: 周辺の前提で意味が変わる箇所、依存している呼び出し元
+- **聞くこと**: 意図が読めない箇所・不一致・テストが無い振る舞いを番号付きで。このPRが持ち込んだものではない既存の問題は、分けて最後に書く
 
-### 変更の地図
-<入口→変更ノードのツリー。付随的な変更は末尾に一行で>
+ページで守ること:
 
-### 押さえる点
-- <周辺の前提で意味が変わる箇所、依存している呼び出し元、照合の結果>
+- `file:line` は PR head のコミットに固定した GitHub リンクにする（`<repo URL>/blob/<headRefOid>/<path>#L<line>`）。ブランチ名で張ると、後の push で行がずれる
+- 推測は出典つきの記述と見た目で区別する（ラベル・色など）
 
-### 聞くこと
-1. <意図が読めない箇所・不一致・テストが無い振る舞い>
-<このPRが持ち込んだものではない既存の問題は、分けて最後に書く>
-```
-
-小さなPRなら節を省いてよい。ただし「何を・なぜ」と地図は省かない。
+会話には、Artifact のリンク、「何を・なぜ」の一文、不一致と聞くことの件数だけを返す。
