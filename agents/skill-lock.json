@@ -543,6 +543,15 @@
       "skillFolderHash": "678c375b883794bf4292715a43acbba5c84681aa",
       "installedAt": "2026-09-20T07:35:11.694Z",
       "updatedAt": "2026-09-20T07:35:11.694Z"
+    },
+    "shu": {
+      "source": "dim0627/shu",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/dim0627/shu.git",
+      "skillPath": "skills/shu/SKILL.md",
+      "skillFolderHash": "cb920d37a1f272ccebe0f031a37c8c4296a75a36",
+      "installedAt": "2026-10-01T08:46:28.857Z",
+      "updatedAt": "2026-10-01T08:46:28.857Z"
     }
   },
   "dismissed": {
