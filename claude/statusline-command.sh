@@ -6,34 +6,16 @@ model=$(echo "$input" | jq -r '.model.display_name // ""')
 used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 worktree=$(echo "$input" | jq -r '.workspace.git_worktree // empty')
 
-# Git branch (skip optional locks)
-branch=""
-if [ -d "$cwd/.git" ] || git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-  branch=$(git -C "$cwd" -c core.useBuiltinFSMonitor=false symbolic-ref --short HEAD 2>/dev/null || git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
-fi
-
-# Directory: basename of cwd
-dir=$(basename "$cwd")
-
-# Build status line
-line=""
-
-# dir + branch
-if [ -n "$branch" ]; then
-  line=$(printf "\033[34m%s\033[0m \033[32m(%s)\033[0m" "$dir" "$branch")
+# リンク worktree 内では cwd の basename が worktree 名になり 🌳 と重複するので、本体リポジトリ名を引く
+common=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+if [ -n "$common" ]; then
+  dir=$(basename "$(dirname "$common")")
 else
-  line=$(printf "\033[34m%s\033[0m" "$dir")
+  dir=$(basename "$cwd")
 fi
 
-# worktree indicator
-if [ -n "$worktree" ]; then
-  line="$line $(printf "\033[33m🌳%s\033[0m" "$worktree")"
-fi
-
-# model
-if [ -n "$model" ]; then
-  line="$line $(printf "\033[35m%s\033[0m" "$model")"
-fi
+# Build status line（右端は幅不足で切られるので、固定長で重要な ctx / gcloud を先頭に置く）
+line=""
 
 # context usage（絶対トークン基準。1M/200k どちらのウィンドウでも
 # 作話バグの「枯渇型」発火帯（OP報告: 100k〜170k）で確実に色が変わるよう実トークン数で判定する。
@@ -56,9 +38,9 @@ if [ -n "$tokens" ]; then
   fi
   if [ -n "$used" ]; then
     pct=$(printf "%.0f" "$used")
-    line="$line $(printf "${color}ctx:%sk(%s%%)\033[0m" "$k" "$pct")"
+    line="${line:+$line }$(printf "${color}ctx:%sk(%s%%)\033[0m" "$k" "$pct")"
   else
-    line="$line $(printf "${color}ctx:%sk\033[0m" "$k")"
+    line="${line:+$line }$(printf "${color}ctx:%sk\033[0m" "$k")"
   fi
 fi
 
@@ -81,8 +63,21 @@ if [ -f "$gcloud_checker" ]; then
   fi
   # 空や未知の値のときは何も出さない（判定できていない状態を「正常」とも「異常」とも言わない）
   if [ "$(cut -d' ' -f1 "$gcloud_cache" 2>/dev/null)" = "expired" ]; then
-    line="$line $(printf "\033[31mgcloud✗\033[0m")"
+    line="${line:+$line }$(printf "\033[31mgcloud✗\033[0m")"
   fi
+fi
+
+# dir
+line="${line:+$line }$(printf "\033[34m%s\033[0m" "$dir")"
+
+# worktree indicator
+if [ -n "$worktree" ]; then
+  line="$line $(printf "\033[33m🌳%s\033[0m" "$worktree")"
+fi
+
+# model
+if [ -n "$model" ]; then
+  line="$line $(printf "\033[35m%s\033[0m" "$model")"
 fi
 
 printf "%b" "$line"
