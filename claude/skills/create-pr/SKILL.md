@@ -55,18 +55,13 @@ allowed-tools: Bash(git status*), Bash(git push*), Bash(git checkout -b *), Bash
 ls .github/PULL_REQUEST_TEMPLATE.md .github/pull_request_template.md docs/pull_request_template.md 2>/dev/null | head -1
 ```
 
-- **テンプレートあり**: テンプレートの構造・見出し・チェックリストを完全踏襲してPR本文を作成する
-- **テンプレートなし**: 以下のデフォルトフォーマットを使用する
+テンプレートがあれば、その構造・見出し・チェックリストを完全踏襲してPR本文を作成する。本文の型を定める他のどの指示よりも、リポジトリのテンプレートが優先する。
 
 タイトルは70文字以内で簡潔に。本文は HEREDOC 形式で渡す:
 
 ```bash
 gh pr create --title "タイトル" --body "$(cat <<'EOF'
-## Summary
-- 変更点を箇条書きで
-
-## Test plan
-- [ ] テスト項目
+<本文>
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
