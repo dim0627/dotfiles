@@ -172,20 +172,13 @@
     "voltagent-biz@voltagent-subagents": false,
     "vercel@claude-plugins-official": true,
     "slack@claude-plugins-official": true,
-    "stripe@claude-plugins-official": true,
-    "i-have-adhd@i-have-adhd": true
+    "stripe@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "voltagent-subagents": {
       "source": {
         "source": "github",
         "repo": "VoltAgent/awesome-claude-code-subagents"
-      }
-    },
-    "i-have-adhd": {
-      "source": {
-        "source": "github",
-        "repo": "ayghri/i-have-adhd"
       }
     }
   },
