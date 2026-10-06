@@ -114,9 +114,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/ask-matt/SKILL.md",
-      "skillFolderHash": "8ab83b2d681b3a343b869e0840535ecf832a17b5",
+      "skillFolderHash": "da068f2392e1144469cbc602ffff96ef47881a88",
       "installedAt": "2026-07-30T02:39:15.549Z",
-      "updatedAt": "2026-10-02T01:19:17.813Z"
+      "updatedAt": "2026-10-05T07:41:26.826Z"
     },
     "codebase-design": {
       "source": "mattpocock/skills",
@@ -449,9 +449,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/dim0627/shu.git",
       "skillPath": "skills/shu/SKILL.md",
-      "skillFolderHash": "a7f5b3f51f6cad82c83831b8fdaddeace2465f43",
+      "skillFolderHash": "300cb78e8aea31f2815a395745f9af488def1e69",
       "installedAt": "2026-10-01T08:46:28.857Z",
-      "updatedAt": "2026-10-02T01:19:51.751Z"
+      "updatedAt": "2026-10-05T07:41:28.386Z"
     },
     "herdr": {
       "source": "herdrdev/herdr",
