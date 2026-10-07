@@ -1,0 +1,5 @@
+{
+  "name": "usage-bar",
+  "version": "0.1.0",
+  "description": "Shows how much of the 5-hour and 7-day rate-limit windows is used on the status line."
+}
