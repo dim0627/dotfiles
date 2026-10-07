@@ -30,7 +30,8 @@ const ok = (stdout: string) => ({
 })
 const failed = { ...ok(''), exitCode: 1 }
 
-const host = (on: On, answers: { pr: boolean; find: boolean }) => {
+const host = (on: On, answers: { pr: boolean; find: boolean; list?: boolean }) => {
+  const calls = { list: 0 }
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
   on('ui.render', ($, e) => {
     const { Box } = $.ui.resolve(e)
@@ -46,8 +47,12 @@ const host = (on: On, answers: { pr: boolean; find: boolean }) => {
       return { value: answers.find ? ok(JSON.stringify({ task: TASK })) : failed }
     }
 
-    return { value: ok(JSON.stringify(LIST)) }
+    calls.list += 1
+
+    return { value: answers.list === false ? failed : ok(JSON.stringify(LIST)) }
   })
+
+  return calls
 }
 
 // The refresh is not awaited by the hook, so the drawing is redrawn until it lands.
@@ -84,4 +89,27 @@ test('falls back to the counts when no task owns the PR', async ($, on) => {
   await $.session.start(START)
 
   await shown($, /open 1 · waiting 1/)
+})
+
+test('keeps the last view when shu fails', async ($, on) => {
+  const answers = { pr: false, find: false, list: true }
+  const calls = host(on, answers)
+  await $.session.start(START)
+  await shown($, /open 1 · waiting 1/)
+
+  answers.list = false
+  await $.session.start(START)
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  for (let i = 0; i < 200 && calls.list < 2; i += 1) {
+    await ui.redraw()
+  }
+  // A write that follows the failed call needs a few more hops to land.
+  for (let i = 0; i < 20; i += 1) {
+    await ui.redraw()
+  }
+
+  expect(calls.list).toBe(2)
+  expect(await ui.find({ type: 'Text', text: /open 1 · waiting 1/ })).toBeDefined()
+  await ui.unmount()
 })
