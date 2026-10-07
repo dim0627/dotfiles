@@ -91,9 +91,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/dim0627/shu.git",
       "skillPath": "skills/shu/SKILL.md",
-      "skillFolderHash": "300cb78e8aea31f2815a395745f9af488def1e69",
+      "skillFolderHash": "f09b49f71c2595cf55660acb40a0ac5176fd8685",
       "installedAt": "2026-10-01T08:46:28.857Z",
-      "updatedAt": "2026-10-05T07:41:28.386Z"
+      "updatedAt": "2026-10-06T09:44:10.291Z"
     },
     "herdr": {
       "source": "herdrdev/herdr",
@@ -113,6 +113,15 @@
       "pluginName": "mattpocock-skills",
       "installedAt": "2026-10-06T04:26:49.672Z",
       "updatedAt": "2026-10-06T04:26:49.672Z"
+    },
+    "shu-triage": {
+      "source": "dim0627/shu",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/dim0627/shu.git",
+      "skillPath": "skills/shu-triage/SKILL.md",
+      "skillFolderHash": "625f35184d256d7a699b5a47a2fa0014377dbd81",
+      "installedAt": "2026-10-06T09:44:08.020Z",
+      "updatedAt": "2026-10-06T09:44:08.020Z"
     }
   },
   "dismissed": {
