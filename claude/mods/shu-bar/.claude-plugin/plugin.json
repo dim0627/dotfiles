@@ -1,0 +1,6 @@
+{
+  "name": "shu-bar",
+  "version": "0.1.0",
+  "description": "Shows the shu task that owns the current branch's PR above the prompt.",
+  "types": "./types/index.d.ts"
+}
