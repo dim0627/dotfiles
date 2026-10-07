@@ -30,15 +30,20 @@ const load = async ($: EngineInterface): Promise<View | null> => {
   return list === null ? null : summaryOf(list)
 }
 
+// A load that fails leaves the last view up: shu failing for one turn should
+// not blank the bar.
 const refresh = async ($: EngineInterface): Promise<void> => {
   try {
     const loaded = await load($)
+    if (loaded === null) {
+      return
+    }
     await update($, view, () => loaded)
     // Under `claude plugin test` the write alone did not redraw a band whose
     // first draw had passed to the engine.
     $.ui.invalidate('ui.render')
   } catch {
-    // The bar keeps its last view; a failed refresh must never fail the turn.
+    // A failed refresh must never fail the turn.
   }
 }
 
