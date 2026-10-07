@@ -1,7 +1,7 @@
 SCRIPT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 HOME_DIR := $(HOME)
 
-.PHONY: all brew link link-dotfiles link-claude link-agents
+.PHONY: all brew link link-dotfiles link-claude link-agents test-mods
 
 all: brew link
 
@@ -34,6 +34,16 @@ link-claude:
 	@for agent_file in $(SCRIPT_DIR)claude/agents/*.md; do \
 		agent_name=$$(basename "$$agent_file"); \
 		ln -snf "$$agent_file" "$(HOME_DIR)/.claude/agents/$$agent_name"; \
+	done
+	mkdir -p $(HOME_DIR)/.claude/mods
+	@for mod_dir in $(SCRIPT_DIR)claude/mods/*/; do \
+		mod_name=$$(basename "$$mod_dir"); \
+		ln -snf "$$mod_dir" "$(HOME_DIR)/.claude/mods/$$mod_name"; \
+	done
+
+test-mods:
+	@for mod_dir in $(SCRIPT_DIR)claude/mods/*/; do \
+		claude plugin validate "$$mod_dir" && claude plugin test "$$mod_dir" || exit 1; \
 	done
 
 # skills CLI (npx skills) が管理する外部スキルのロックファイル。

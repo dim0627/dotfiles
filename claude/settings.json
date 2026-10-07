@@ -72,6 +72,9 @@
     "defaultMode": "auto"
   },
   "model": "opus",
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods"
+  },
   "hooks": {
     "SessionStart": [
       {
