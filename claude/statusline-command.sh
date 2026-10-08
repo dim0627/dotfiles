@@ -1,18 +1,9 @@
 #!/bin/sh
 input=$(cat)
 
-cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
 model=$(echo "$input" | jq -r '.model.display_name // ""')
 used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 worktree=$(echo "$input" | jq -r '.workspace.git_worktree // empty')
-
-# リンク worktree 内では cwd の basename が worktree 名になり 🌳 と重複するので、本体リポジトリ名を引く
-common=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
-if [ -n "$common" ]; then
-  dir=$(basename "$(dirname "$common")")
-else
-  dir=$(basename "$cwd")
-fi
 
 # Build status line（右端は幅不足で切られるので、固定長で重要な ctx / gcloud を先頭に置く）
 line=""
@@ -67,17 +58,14 @@ if [ -f "$gcloud_checker" ]; then
   fi
 fi
 
-# dir
-line="${line:+$line }$(printf "\033[34m%s\033[0m" "$dir")"
-
 # worktree indicator
 if [ -n "$worktree" ]; then
-  line="$line $(printf "\033[33m🌳%s\033[0m" "$worktree")"
+  line="${line:+$line }$(printf "\033[33m🌳%s\033[0m" "$worktree")"
 fi
 
 # model
 if [ -n "$model" ]; then
-  line="$line $(printf "\033[35m%s\033[0m" "$model")"
+  line="${line:+$line }$(printf "\033[35m%s\033[0m" "$model")"
 fi
 
 printf "%b" "$line"
