@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods"
+  },
   "permissions": {
     "allow": [
       "Bash(git log *)",
@@ -72,9 +75,6 @@
     "defaultMode": "auto"
   },
   "model": "opus",
-  "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods"
-  },
   "hooks": {
     "SessionStart": [
       {
