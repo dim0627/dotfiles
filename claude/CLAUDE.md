@@ -54,6 +54,11 @@
 - 許可: 非自明な制約、意図的な逸脱、罠、外部issue/RFCへのポインタ、lint/型プラグマ
 - 残すコメントは最小語数まで削る
 
+## 重いコマンドの逃がし先
+
+- 全体の型チェック・全体のテスト・ビルドなど手元で数分かかるコマンドは、GitHub Codespace に逃がす。手順は `offload-codespace` スキル
+- 手元で回すもの: 1ファイルのテスト・lint など数十秒で終わるもの、ローカルDB・docker compose・手元だけの認証に依存するもの
+
 ## ブラウザ操作
 
 - ブラウザ操作は `agent-browser` を第一選択。Playwright 資産の保守・E2E など特別な事情がある場合のみ `playwright-cli` を使用可。Playwright MCP は使わない
