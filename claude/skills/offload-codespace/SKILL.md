@@ -1,6 +1,6 @@
 ---
 name: offload-codespace
-description: 重いコマンド（全体の型チェック・テスト・ビルド）を使い捨ての GitHub Codespace に逃がして実行し、結果を手元に持ち帰る
+description: 全体の型チェック・ビルドなど、手元で数分かかるコマンドを流すときに使う。使い捨ての GitHub Codespace で実行し、結果を手元に持ち帰る。DB を使う全体のテストは CI に任せる
 ---
 
 手元のセッションはそのまま、重いコマンドだけを使い捨ての Codespace で実行する。Codespace は使うたびに作り、終わったら必ず消す。
