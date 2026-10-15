@@ -87,7 +87,7 @@ gh codespace list
 - `ssh -c` の中で `cd X && (...) &` と書くと `cd` ごとバックグラウンドに回り、後続のコマンドがホームディレクトリで動く。バックグラウンドのジョブは独立した行に書く
 - `pkill -f <文字列>` は自分の `ssh -c` のシェルにもマッチして接続ごと落ちる
 - 汎用イメージには `bc` と GNU `time` が無い。時間は `date +%s.%N` の差を `awk` で計算する
-- 汎用イメージでは dockerd が最初から動いていて `docker run` はできるが、docker compose のコンテナどうしの通信が通らなかった（DB に接続するコマンドがタイムアウト）。`.devcontainer/` で `ghcr.io/devcontainers/features/docker-in-docker` を指定したら通った。指定の無いリポジトリでは、DB や compose に依存するものは手元で回す
+- 汎用イメージでは dockerd が最初から動いていて `docker run` はできるが、docker compose のコンテナどうしの通信が通らなかった（DB に接続するコマンドがタイムアウト）。`mcr.microsoft.com/devcontainers/base` に `ghcr.io/devcontainers/features/docker-in-docker` を足した `.devcontainer/` では通った。汎用イメージにも同じ feature が入っているので、差の原因は分かっていない。`.devcontainer/` の無いリポジトリでは、DB や compose に依存するものは手元で回す
 - `mcr.microsoft.com/devcontainers/base` などのイメージには SSH サーバーが無く、`gh codespace ssh` が `failed to start SSH server` で失敗する。`.devcontainer/` に `ghcr.io/devcontainers/features/sshd` が要る
 - 手元のハーネスが `gh codespace ssh` に渡すコマンド文字列を拒むときは、実行内容をファイルに書き、`gh codespace ssh -c <name> < script.sh` で標準入力から流す。この形でも nvm の Node には PATH が通っていた。git の認証が読み込まれるかは未確認
 - 8コア/32GB でも、大きい monorepo の並列型チェックはメモリのピークが上限近くまで行った。OOM（exit 137）になったら、重いパッケージだけ単一スレッドで回すか、マシンを上げる（上げる前にもう一度確認を取る）
