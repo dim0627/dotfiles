@@ -9,14 +9,14 @@ description: 全体の型チェック・ビルドなど、手元で数分かか�
 
 ### 1. 準備
 
-- `gh auth status` の scopes に `codespace` があるか見る。無ければ Daisuke に `! gh auth refresh -h github.com -s codespace` を打ってもらう（ブラウザ承認が要るので自分では打てない）
+- `gh auth status` の scopes に `codespace` があるか見る。無ければユーザーに `! gh auth refresh -h github.com -s codespace` を打ってもらう（ブラウザ承認が要るので自分では打てない）
 - `gh api repos/<owner>/<repo>/codespaces/machines` で選べるマシンを引く。既定は 8コア/32GB（`premiumLinux`）
 
 完了: scope があり、使うマシン名が決まっている。
 
 ### 2. 作成の確認を取る
 
-作成は課金が発生する。毎回、次を示して Daisuke の明示の GO を待つ:
+作成は課金が発生する。毎回、次を示してユーザーの明示の GO を待つ:
 
 - マシン（コア数・メモリ）と、そのマシンの1時間あたりの単価（[料金ページ](https://docs.github.com/en/billing/concepts/product-billing/github-codespaces) で確かめる）
 - 課金先は作るまで分からないこと（組織が許可していれば組織払い、なければ個人払い）
@@ -32,7 +32,7 @@ gh codespace create -R <owner>/<repo> -b <base-branch> -m <machine> \
 gh codespace view -c <name> --json state,billableOwner
 ```
 
-`--idle-timeout` と `--retention-period` は、削除し損ねたときの保険。作成直後に `billableOwner` を Daisuke に伝える。
+`--idle-timeout` と `--retention-period` は、削除し損ねたときの保険。作成直後に `billableOwner` をユーザーに伝える。
 
 リポジトリに `.devcontainer/` があると、`Available` になった後も `postCreateCommand`（依存のインストール等）が裏で走っている。`/workspaces/.codespaces/.persistedshare/creation.log` に `Finished configuring codespace.` が出るまで待ち、その手前の行で失敗していないかを見る。
 
