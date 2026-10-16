@@ -5,6 +5,7 @@ import type { On } from 'claude-code'
 const PR_URL = 'https://github.com/acme/app/pull/12'
 const TASK = { id: '20261007-aoi-kitsune', title: 'Fix login', status: 'open', note: 'review pending' }
 const LIST = { tasks: [TASK, { ...TASK, status: 'waiting' }] }
+const TOUCHED = { ...TASK, id: '20261008-akai-tsuru', title: 'Trace the alert' }
 
 const START = { cwd: '/repo', surface: 'terminal', isInteractive: true } as const
 
@@ -43,6 +44,9 @@ const host = (on: On, answers: { pr: boolean; find: boolean; list?: boolean }) =
     if (command === 'gh') {
       return { value: answers.pr ? ok(`${PR_URL}\n`) : failed }
     }
+    if (sub === 'show') {
+      return { value: ok(JSON.stringify({ task: TOUCHED })) }
+    }
     if (sub === 'find') {
       return { value: answers.find ? ok(JSON.stringify({ task: TASK })) : failed }
     }
@@ -75,6 +79,18 @@ test('shows the task that owns the branch PR', async ($, on) => {
 
   await shown($, /aoi-kitsune/)
   await shown($, /Fix login — review pending/)
+})
+
+test('shows the task the session worked on over the one that owns the branch PR', async ($, on) => {
+  host(on, { pr: true, find: true })
+  on('tool.call', () => ({ result: {}, text: '' }))
+  await $.session.start(START)
+  await shown($, /aoi-kitsune/)
+
+  await $.tool.call({ tool: 'Bash', command: 'shu show akai-tsuru --json' })
+
+  await shown($, /akai-tsuru/)
+  await shown($, /Trace the alert/)
 })
 
 test('falls back to the open and waiting counts with no PR', async ($, on) => {

@@ -1,6 +1,6 @@
 {
   "name": "shu-bar",
   "version": "0.1.0",
-  "description": "Shows the shu task that owns the current branch's PR above the prompt.",
+  "description": "Shows the shu task the session works on above the prompt: the one it touched, else the one that owns the branch's open PR.",
   "types": "./types/index.d.ts"
 }
