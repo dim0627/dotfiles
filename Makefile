@@ -1,7 +1,7 @@
 SCRIPT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 HOME_DIR := $(HOME)
 
-.PHONY: all brew link link-dotfiles link-claude link-agents test-mods
+.PHONY: all brew link link-dotfiles link-claude link-agents link-herdr test-mods
 
 all: brew link
 
@@ -10,7 +10,7 @@ brew:
 	brew update
 	brew bundle --file=$(SCRIPT_DIR)Brewfile
 
-link: link-dotfiles link-claude link-agents
+link: link-dotfiles link-claude link-agents link-herdr
 
 link-dotfiles:
 	ln -sf $(SCRIPT_DIR).zshrc $(HOME_DIR)/.zshrc
@@ -51,3 +51,8 @@ test-mods:
 link-agents:
 	mkdir -p $(HOME_DIR)/.agents
 	ln -sf $(SCRIPT_DIR)agents/skill-lock.json $(HOME_DIR)/.agents/.skill-lock.json
+
+# ~/.config/herdr/ にはセッション・ログ・ソケットも同居するので、設定ファイルだけをリンクする。
+link-herdr:
+	mkdir -p $(HOME_DIR)/.config/herdr
+	ln -sf $(SCRIPT_DIR)herdr/config.toml $(HOME_DIR)/.config/herdr/config.toml
