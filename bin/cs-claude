@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # 手元の作業ツリーの状態を Codespace に送り、そこで claude -p を実行して出力を返す。
 # Usage: cs-claude '<prompt>'   (例: cs-claude '/review-code ブランチ差分をレビュー')
+#        cs-claude --warm       Codespace を起こして準備が終わるまで待つだけ（SessionStart フックから呼ぶ）
 # Codespace はリポジトリごとに1台（表示名 claude-offload）を使い回し、無ければ作る。
 # claude 本体と skills/agents は dotfiles の install.sh が入れる。認証は Codespaces のユーザーシークレット CLAUDE_CODE_OAUTH_TOKEN。
 set -euo pipefail
 
-PROMPT="${1:?usage: cs-claude '<prompt>'}"
+PROMPT="${1:?usage: cs-claude '<prompt>' | cs-claude --warm}"
 MACHINE="${CS_CLAUDE_MACHINE:-premiumLinux}"
 DISPLAY_NAME="claude-offload"
 # 手元の auto mode が bypassPermissions を止めるので、読み取りの道具だけを許可する
@@ -22,12 +23,28 @@ log() { echo "[cs-claude] $*" >&2; }
 
 cs_ssh() { gh codespace ssh -c "$CS" -- "bash -lc '$1'"; }
 
-CS="$(gh codespace list -R "$REPO" --json name,displayName -q ".[] | select(.displayName == \"$DISPLAY_NAME\") | .name" | head -1)"
+find_cs() { gh codespace list -R "$REPO" --json name,displayName -q ".[] | select(.displayName == \"$DISPLAY_NAME\") | .name" | head -1; }
+
+# 複数セッションが同時に起動しても1台しか作らない
+LOCK="/tmp/cs-claude-create-${REPO//\//-}.lock"
+find "$LOCK" -maxdepth 0 -mmin +10 -exec rmdir {} \; 2>/dev/null || true
+CS="$(find_cs)"
 if [ -z "$CS" ]; then
-	log "creating Codespace ($MACHINE) for $REPO"
-	CS="$(gh codespace create -R "$REPO" -b "$BASE" -m "$MACHINE" -d "$DISPLAY_NAME" \
-		--idle-timeout 30m --retention-period 24h 2>/dev/null | tail -1)"
+	if mkdir "$LOCK" 2>/dev/null; then
+		log "creating Codespace ($MACHINE) for $REPO"
+		CS="$(gh codespace create -R "$REPO" -b "$BASE" -m "$MACHINE" -d "$DISPLAY_NAME" \
+			--idle-timeout 30m --retention-period 24h 2>/dev/null | tail -1)"
+		rmdir "$LOCK"
+	else
+		for _ in $(seq 1 60); do
+			CS="$(find_cs)"
+			[ -n "$CS" ] && break
+			log "waiting for another process to create the Codespace"
+			sleep 5
+		done
+	fi
 fi
+[ -n "$CS" ] || { log "no Codespace available"; exit 1; }
 log "Codespace: $CS"
 
 # 作成直後は dotfiles の install.sh が裏で走っている
@@ -38,6 +55,8 @@ for _ in $(seq 1 36); do
 	log "waiting for dotfiles install"
 	sleep 5
 done
+
+[ "$PROMPT" = "--warm" ] && exit 0
 
 git fetch -q origin "$BASE"
 BASE_SHA="$(git merge-base HEAD "origin/$BASE")"
