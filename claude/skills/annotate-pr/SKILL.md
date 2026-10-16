@@ -64,14 +64,6 @@ gh api repos/{owner}/{repo}/pulls/<N>/comments --paginate
 
 理由が背景のどこにも無い箇所は、推測で埋めない。作者と違う理由を書くと、レビュアーはその理由を前提にコードを読み違える。その箇所はコメントせず、手順5でユーザーに聞く。
 
-例:
-
-```
-Why after CORS: otherwise the 413 has no CORS headers and the browser hides it as a network error.
-
-Note it runs before any auth, so an oversized body gets 413 even without credentials. That is on purpose: the point is to stop reading the body early.
-```
-
 **完了条件**: 各コメントの1行目にラベルがあり、主張ごとに裏付けか背景の出典がある。
 
 ### 4. 1つの review として投稿する
