@@ -39,6 +39,7 @@
 
 - スキル（`SKILL.md`・references）や CLAUDE.md / AGENTS.md を作成・編集したら、`writing-for-agents` スキルで自分でレビューパスをかける
 - PRを作成したら、`/review-code` を流すか確認する
+- 大きめのPR（目安: 数百行・10ファイル超）なら `/annotate-pr` も確認する。順番はレビュー対応の後（後の push で行がずれ、コメントが outdated になる）
 
 ## コーディング原則
 
