@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# 手元の作業ツリーの状態を Codespace に送り、そこで claude -p を実行して出力を返す。
+# Usage: cs-claude '<prompt>'   (例: cs-claude '/review-code ブランチ差分をレビュー')
+# Codespace はリポジトリごとに1台（表示名 claude-offload）を使い回し、無ければ作る。
+# claude 本体と skills/agents は dotfiles の install.sh が入れる。認証は Codespaces のユーザーシークレット CLAUDE_CODE_OAUTH_TOKEN。
+set -euo pipefail
+
+PROMPT="${1:?usage: cs-claude '<prompt>'}"
+MACHINE="${CS_CLAUDE_MACHINE:-premiumLinux}"
+DISPLAY_NAME="claude-offload"
+# 手元の auto mode が bypassPermissions を止めるので、読み取りの道具だけを許可する
+ALLOWED_TOOLS="Read,Grep,Glob,Agent,Skill,WebFetch,Bash(git diff:*),Bash(git show:*),Bash(git log:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git ls-files:*),Bash(git blame:*),Bash(ls:*),Bash(wc:*)"
+
+REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
+BASE="$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)"
+WORKSPACE="/workspaces/${REPO#*/}"
+RUN_ID="$(date +%Y%m%d%H%M%S)-$$"
+LOCAL_DIR="$(mktemp -d)"
+trap 'rm -rf "$LOCAL_DIR"' EXIT
+
+log() { echo "[cs-claude] $*" >&2; }
+
+cs_ssh() { gh codespace ssh -c "$CS" -- "bash -lc '$1'"; }
+
+CS="$(gh codespace list -R "$REPO" --json name,displayName -q ".[] | select(.displayName == \"$DISPLAY_NAME\") | .name" | head -1)"
+if [ -z "$CS" ]; then
+	log "creating Codespace ($MACHINE) for $REPO"
+	CS="$(gh codespace create -R "$REPO" -b "$BASE" -m "$MACHINE" -d "$DISPLAY_NAME" \
+		--idle-timeout 30m --retention-period 24h 2>/dev/null | tail -1)"
+fi
+log "Codespace: $CS"
+
+# 作成直後は dotfiles の install.sh が裏で走っている
+for _ in $(seq 1 36); do
+	if cs_ssh 'test -x ~/.local/bin/claude && test -e ~/.claude/skills/review-code' 2>/dev/null; then
+		break
+	fi
+	log "waiting for dotfiles install"
+	sleep 5
+done
+
+git fetch -q origin "$BASE"
+BASE_SHA="$(git merge-base HEAD "origin/$BASE")"
+mkdir -p "$LOCAL_DIR/payload"
+printf '%s' "$PROMPT" > "$LOCAL_DIR/payload/prompt.txt"
+echo "$BASE_SHA" > "$LOCAL_DIR/payload/base_sha"
+if [ "$(git rev-parse HEAD)" != "$BASE_SHA" ]; then
+	git bundle create -q "$LOCAL_DIR/payload/wip.bundle" "$BASE_SHA..HEAD"
+fi
+git diff --binary HEAD > "$LOCAL_DIR/payload/wip.patch"
+git ls-files --others --exclude-standard -z | tar --no-mac-metadata --no-xattrs --null -T - -czf "$LOCAL_DIR/payload/untracked.tgz"
+
+cat > "$LOCAL_DIR/payload/run.sh" <<EOF
+set -euo pipefail
+DIR=/tmp/cs-claude/$RUN_ID
+WT=\$DIR/wt
+cd "$WORKSPACE"
+git fetch -q origin
+REV=\$(cat \$DIR/base_sha)
+if [ -f \$DIR/wip.bundle ]; then
+	git fetch -q \$DIR/wip.bundle HEAD
+	REV=\$(git rev-parse FETCH_HEAD)
+fi
+git worktree add -q --detach "\$WT" "\$REV"
+trap 'cd "$WORKSPACE"; git worktree remove --force "\$WT"; rm -rf "\$DIR"' EXIT
+cd "\$WT"
+[ -s \$DIR/wip.patch ] && git apply \$DIR/wip.patch
+tar -xzf \$DIR/untracked.tgz 2>/dev/null
+~/.local/bin/claude -p "\$(cat \$DIR/prompt.txt)" \
+	--allowedTools "$ALLOWED_TOOLS" \
+	--disallowedTools "Edit,Write,NotebookEdit" < /dev/null
+EOF
+
+tar --no-mac-metadata --no-xattrs -czf "$LOCAL_DIR/payload.tgz" -C "$LOCAL_DIR/payload" .
+gh codespace cp -c "$CS" -e "$LOCAL_DIR/payload.tgz" "remote:/tmp/cs-claude-$RUN_ID.tgz"
+cs_ssh "mkdir -p /tmp/cs-claude/$RUN_ID && tar -xzf /tmp/cs-claude-$RUN_ID.tgz -C /tmp/cs-claude/$RUN_ID 2>/dev/null && rm /tmp/cs-claude-$RUN_ID.tgz"
+log "running in $CS (run $RUN_ID)"
+cs_ssh "bash /tmp/cs-claude/$RUN_ID/run.sh"
