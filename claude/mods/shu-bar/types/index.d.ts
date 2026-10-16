@@ -4,6 +4,6 @@ export type View =
 
 declare module 'claude-code' {
   interface PluginState {
-    'shu-bar': { view: View | null }
+    'shu-bar': { view: View | null; touched: string | null }
   }
 }

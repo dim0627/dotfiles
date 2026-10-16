@@ -2,9 +2,13 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { View } from '../types'
-import { shortId, summaryOf, taskOf } from './view'
+import { shortId, summaryOf, taskOf, touchedOf } from './view'
 
 const view = atom({ plugin: 'shu-bar', key: 'view' } as const, null)
+const touched = atom({ plugin: 'shu-bar', key: 'touched' } as const, null)
+
+// gh also answers with a branch's merged PR, whose task is no longer the work here.
+const OPEN_PR_URL = 'select(.state == "OPEN") | .url'
 
 const stdoutOf = async ($: EngineInterface, argv: readonly string[]): Promise<string | null> => {
   try {
@@ -16,14 +20,24 @@ const stdoutOf = async ($: EngineInterface, argv: readonly string[]): Promise<st
   }
 }
 
+const taskFrom = async ($: EngineInterface, argv: readonly string[]): Promise<View | null> => {
+  const printed = await stdoutOf($, argv)
+
+  return printed === null ? null : taskOf(printed)
+}
+
+// The task this session worked on outranks the branch's: a checkout shared by
+// several sessions has one branch, and not every task has one.
 const load = async ($: EngineInterface): Promise<View | null> => {
-  const prUrl = (await stdoutOf($, ['gh', 'pr', 'view', '--json', 'url', '-q', '.url']))?.trim()
-  if (prUrl) {
-    const found = await stdoutOf($, ['shu', 'find', '--ref', prUrl, '--json'])
-    const task = found === null ? null : taskOf(found)
-    if (task !== null) {
-      return task
-    }
+  const id = await read($, touched)
+  const own = id === null ? null : await taskFrom($, ['shu', 'show', id, '--json'])
+  if (own !== null) {
+    return own
+  }
+  const prUrl = (await stdoutOf($, ['gh', 'pr', 'view', '--json', 'url,state', '-q', OPEN_PR_URL]))?.trim()
+  const owner = prUrl ? await taskFrom($, ['shu', 'find', '--ref', prUrl, '--json']) : null
+  if (owner !== null) {
+    return owner
   }
   const list = await stdoutOf($, ['shu', 'list', '--json'])
 
@@ -61,6 +75,21 @@ export const register: Register = on => {
 
     return next(e)
   })
+
+  on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
+    const ran = await next(e)
+    try {
+      const id = ran.deny === undefined ? touchedOf(e.command, ran.text ?? '') : null
+      if (id !== null) {
+        await update($, touched, () => id)
+        void refresh($)
+      }
+    } catch {
+      // Reading the call must never fail it.
+    }
+
+    return ran
+  }).catch((_$, e, next) => next(e))
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const current = await read($, view)
