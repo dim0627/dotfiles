@@ -1,0 +1,31 @@
+onboarding = false
+
+[ui.toast]
+delivery = "system"
+
+[ui]
+status_indicators = "symbols"
+
+[theme]
+name = "vesper"
+auto_switch = false
+
+# Mirrors ~/.tmux.conf so muscle memory carries over.
+[keys]
+prefix = "ctrl+t"
+
+reload_config = "prefix+r"
+resize_mode = "prefix+shift+r"
+
+# tmux: v = split-window -h (side by side), s = split-window -v (stacked)
+split_vertical = "prefix+v"
+split_horizontal = "prefix+s"
+settings = "prefix+shift+s"
+
+# tmux: T sets the pane label, "," renames the window
+rename_pane = "prefix+shift+t"
+rename_tab = "prefix+comma"
+
+# tmux defaults
+detach = "prefix+d"
+close_tab = "prefix+ampersand"
