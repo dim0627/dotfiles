@@ -1,0 +1,106 @@
+---
+name: annotate-pr
+description: 自分のPRに、レビュアー向けの説明をインラインコメントで付ける。判断ポイントに「なぜこう書いたか」「何が変わるか」を置く。「インラインコメントで説明して」「レビュアー向けに説明」で起動。
+user-invocable: true
+allowed-tools: Bash(gh pr view*), Bash(gh pr diff*), Bash(gh api *), Bash(git log*), Bash(git diff*), Bash(git show*), Bash(git grep*), Read, Grep, Glob, Write
+---
+
+# annotate-pr
+
+自分のPRの差分に、レビュアー向けのインラインコメントを付ける。AIが書いたPRは、レビュアーが背景を掴み、コードから意図を読み解くまでが重い。その負担を、作者側が判断ポイントに理由を置いて先回りして減らす。
+
+コメントが運ぶのは、**差分を読んでも分からないこと**だけ。レビュアーはコードを読めるので、コードの言い換えは読む量を増やすだけになる。
+
+## 入力
+
+PRのURLか番号。無ければカレントブランチのPR（`gh pr view`）を対象にする。
+
+## 手順
+
+### 1. 背景を集める
+
+「なぜ」は差分から復元できない。材料は次の順に集める。
+
+1. この会話の文脈（直前にPRを作ったセッションなら、ここが一番厚い）
+2. PR本文・コミットメッセージ・本文から参照されている issue / チケット / 前段PR
+3. タスク記録（`shu find --ref <PR URL>` 等）があれば、その経緯
+
+```bash
+gh pr view <PR> --json url,number,headRefOid,title,body,files,commits
+gh pr diff <PR>
+gh api repos/{owner}/{repo}/pulls/<N>/comments --paginate
+```
+
+既存のインラインコメントは、同じ内容を二度置かないために読む。
+
+**完了条件**: 変更ファイルごとに、なぜ変えたかを言えるか、言えないと分かっている。
+
+### 2. コメントする場所を選ぶ
+
+置くのは**判断ポイント**だけ。目安は数ファイルに1件。全ファイルに置かない。
+
+置く場所:
+
+- **選んだやり方に理由がある箇所**: 素直な書き方・既存の書き方を選ばなかった、配置や順序に意味がある、既定値をあえて外した
+- **振る舞いが変わる箇所**: 外から見える変化と、その副作用（ステータスコードが変わる、今まで通っていたものが弾かれる）
+- **値・範囲・一覧の決め方**: しきい値や対象の選び方。根拠になった実測・調査があれば書く
+- **テストの意図と限界**: 何を捕まえるテストか、何は捕まえられないか
+- **消したもの・残したもの**: 消しても安全な理由、あえて残した理由
+
+リネーム・生成物・lockfile・フォーマットだけの変更は、レビュアーが流し読みできるので対象外。
+
+同じ理由が複数ファイルにまたがるときは、代表の1か所に置き、他は `Same for <file>` と書き添える。
+
+**完了条件**: 選んだ各箇所について、差分に書いていない情報を1つ以上言える。
+
+### 3. コメントを書く
+
+言語はリポジトリのPR・レビューコメントに合わせる。英語なら平易な英語で、短い文で書く。
+
+- **1行目でコメントの種類を言う**: `Why <対象>:` / `Why not <代替案>:` / `Side effect:` / `What it cannot catch:` / `How <対象> were picked:` / `Note:` など。1件に複数の観点があれば、ラベルごとに段落を分ける
+- **主張には裏付けを添える**: 本番の実測値、過去のPR・issue番号、呼び出し元の有無、実際に試した結果（`I checked: removing X gives 500s`）
+- **振る舞いの変化は、答えが分かれる場面で書く**: どの入力で、前後で何が返るか
+- 識別子はバッククォートで囲む。1文に言うことは1つ
+
+理由が背景のどこにも無い箇所は、推測で埋めない。作者と違う理由を書くと、レビュアーはその理由を前提にコードを読み違える。その箇所はコメントせず、手順5でユーザーに聞く。
+
+例:
+
+```
+Why after CORS: otherwise the 413 has no CORS headers and the browser hides it as a network error.
+
+Note it runs before any auth, so an oversized body gets 413 even without credentials. That is on purpose: the point is to stop reading the body early.
+```
+
+**完了条件**: 各コメントの1行目にラベルがあり、主張ごとに裏付けか背景の出典がある。
+
+### 4. 1つの review として投稿する
+
+全コメントを1つの review（`event: COMMENT`）にまとめて投稿する。1件ずつ投稿すると、レビュアーに件数分の通知が飛ぶ。
+
+投稿の前に、各コメントの行が差分の hunk の中にあるかを `gh pr diff` で確かめる。hunk の外の行は API が 422 で弾き、review 全体が投稿されない。
+
+- 追加・変更行は `side: "RIGHT"` に head 側の行番号、削除行は `side: "LEFT"` に base 側の行番号
+- 範囲に付けるときは `start_line` / `start_side` も足す
+
+```bash
+cat > <scratchpad>/review.json <<'EOF'
+{
+  "commit_id": "<headRefOid>",
+  "event": "COMMENT",
+  "comments": [
+    { "path": "src/app.ts", "line": 42, "side": "RIGHT", "body": "Why ...: ..." }
+  ]
+}
+EOF
+gh api repos/{owner}/{repo}/pulls/<N>/reviews --input <scratchpad>/review.json
+```
+
+**完了条件**: review が1つ投稿され、APIの応答にエラーが無い。
+
+### 5. 報告する
+
+会話には次を返す。
+
+- 投稿した review のURLと件数
+- 理由が分からずコメントを見送った箇所（`path:line` と、何を聞きたいか）。答えが返ってきたら、追加の review として投稿する
