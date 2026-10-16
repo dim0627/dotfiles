@@ -2,7 +2,7 @@
 name: brief-pr
 description: 他人のPRのブリーフを作る。レビュー前に、要旨（何を・なぜ・どうやって）、変更の地図（コールスタック）、コードを読む前提をまとめる。「PR読み解いて」「このPRの意図は」で起動。
 user-invocable: true
-allowed-tools: Bash(gh pr view*), Bash(gh pr diff*), Bash(gh pr checks*), Bash(gh issue view*), Bash(gh api repos*), Bash(ghq list*), Bash(git fetch*), Bash(git show*), Bash(git grep*), Bash(git log*), Bash(git diff*), Read, Grep, Glob, Write, Artifact
+allowed-tools: Bash(gh pr view*), Bash(gh pr diff*), Bash(gh pr checks*), Bash(gh issue view*), Bash(gh api repos*), Bash(ghq list*), Bash(git fetch*), Bash(git show*), Bash(git grep*), Bash(git log*), Bash(git diff*), Bash(cp ~/.claude/skills/brief-pr/brief.css *), Read, Grep, Glob, Write, Artifact
 ---
 
 # brief-pr
@@ -65,7 +65,46 @@ gh pr checks <PR>
 
 ### 4. ブリーフを Artifact で返す
 
-ブリーフを HTML ページに書き、Artifact として公開する。ファイルはスクラッチパッドの `brief-pr-<repo>-<N>.html`。同じセッションで同じPRを作り直すときは同じパスで再公開し、URL を保つ。
+見た目はこのスキルに同梱の `brief.css` で決まっている。色のトークンもダークモードも入っているので、artifact-design は読まずに中身だけを書く。
+
+1. `brief.css` をスクラッチパッドにコピーする: `cp ~/.claude/skills/brief-pr/brief.css <scratchpad>/brief.css`
+2. 下の骨組みに沿って、スクラッチパッドの `brief-pr-<repo>-<N>.html` を書く。`<style>` は書かない
+3. `files: {"brief.css": "<scratchpad>/brief.css"}` を付けて Artifact で公開する。同じセッションで同じPRを作り直すときは同じパスで再公開し、URL を保つ
+
+```html
+<title>PR <N> ブリーフ</title>
+<link rel="stylesheet" href="brief.css">
+<main>
+  <header>
+    <p class="kicker"><owner>/<repo> · レビュー前のブリーフ</p>
+    <h1><a href="<PR URL>">#<N></a> <PRタイトル></h1>
+  </header>
+  <section>
+    <h2>要旨</h2>
+    <div class="gist">
+      <div><h3>何を</h3><p>…</p></div>
+      <div><h3>なぜ</h3><p>…</p></div>
+      <div><h3>どうやって</h3><p>…</p></div>
+      <p class="source">出典：…</p>
+    </div>
+  </section>
+  <section>
+    <h2>変更の地図</h2>
+    <div class="tree"><pre>入口
+└─ <mark>変更ノード</mark>  <a href="…">file:line</a>  <span class="note">前: … → 後: …</span></pre></div>
+    <p>付随的な変更：</p><ul><li>…</li></ul>
+  </section>
+  <section>
+    <h2>読む前に知っておくこと</h2>
+    <div class="premise"><strong>見出し1文</strong><ul><li>…</li></ul></div>
+  </section>
+  <section><h2>聞くこと</h2><ul><li>…</li></ul></section>
+  <section>
+    <h2>PRの情報</h2>
+    <dl><dt>作者</dt><dd>…</dd><dt>ブランチ</dt><dd>base ← head</dd><dt>規模</dt><dd>…</dd><dt>CI</dt><dd>…</dd><dt>head</dt><dd><code>…</code></dd></dl>
+  </section>
+</main>
+```
 
 ページの節は次の順。
 
@@ -109,6 +148,6 @@ gh pr checks <PR>
 #### ページで守ること
 
 - `file:line` は PR head のコミットに固定した GitHub リンクにする（`<repo URL>/blob/<headRefOid>/<path>#L<line>`）。ブランチ名で張ると、後の push で行がずれる
-- 推測は出典つきの記述と見た目で区別する（ラベル・色など）
+- 推測は出典つきの記述と見た目で区別する（`<span class="guess">推測</span>` を付ける）
 
 会話には、Artifact のリンク、要旨の全文、聞くことの件数を返す。
