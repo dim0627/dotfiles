@@ -191,7 +191,8 @@
     "voltagent-biz@voltagent-subagents": false,
     "vercel@claude-plugins-official": true,
     "slack@claude-plugins-official": true,
-    "stripe@claude-plugins-official": true
+    "stripe@claude-plugins-official": true,
+    "claude-security@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "voltagent-subagents": {
@@ -202,7 +203,7 @@
     }
   },
   "skipWorkflowUsageWarning": true,
+  "switchModelsOnFlag": false,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true,
-  "switchModelsOnFlag": false
+  "skipAutoPermissionPrompt": true
 }
