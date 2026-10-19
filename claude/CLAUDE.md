@@ -59,6 +59,7 @@
 
 - 全体の型チェック・ビルドなど手元で数分かかるコマンドは、GitHub Codespace に逃がす。手順は `offload-codespace` スキル
 - DB を使う全体のテストは CI に任せる
+- `/review-code` は走らせる前に毎回、手元か Codespace かを Daisuke に確認する（手元の負荷を知るのは本人だけ）。Codespace なら Skill の args に `--cs` を付ける
 - 手元で回すもの: 1ファイルのテスト・lint など数十秒で終わるもの、手元だけの認証に依存するもの。ローカルDB・docker compose に依存するものも、リポジトリに `.devcontainer/` が無ければ手元
 
 ## ブラウザ操作
