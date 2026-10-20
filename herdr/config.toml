@@ -6,7 +6,7 @@ delivery = "system"
 [ui]
 status_indicators = "symbols"
 
-# Claude Code's turn-end sound comes from its Stop hook, which can skip loop ticks; Herdr can't tell turns apart.
+# Off mutes both Claude sounds (done and needs-attention). Claude Code's own hooks play them instead, and its Stop hook can skip loop ticks; Herdr can't tell turns apart.
 [ui.sound.agents]
 claude = "off"
 
