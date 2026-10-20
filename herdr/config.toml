@@ -6,6 +6,10 @@ delivery = "system"
 [ui]
 status_indicators = "symbols"
 
+# Claude Code's turn-end sound comes from its Stop hook, which can skip loop ticks; Herdr can't tell turns apart.
+[ui.sound.agents]
+claude = "off"
+
 [theme]
 name = "vesper"
 auto_switch = false

@@ -28,6 +28,7 @@ link-claude:
 	ln -sf $(SCRIPT_DIR)claude/gcloud-auth-check.sh $(HOME_DIR)/.claude/gcloud-auth-check.sh
 	ln -sf $(SCRIPT_DIR)claude/cs-offload-hook.sh $(HOME_DIR)/.claude/cs-offload-hook.sh
 	ln -sf $(SCRIPT_DIR)claude/cs-warm-hook.sh $(HOME_DIR)/.claude/cs-warm-hook.sh
+	ln -sf $(SCRIPT_DIR)claude/stop-sound-hook.sh $(HOME_DIR)/.claude/stop-sound-hook.sh
 	@for skill_dir in $(SCRIPT_DIR)claude/skills/*/; do \
 		skill_name=$$(basename "$$skill_dir"); \
 		ln -snf "$$skill_dir" "$(HOME_DIR)/.claude/skills/$$skill_name"; \

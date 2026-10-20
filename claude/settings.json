@@ -146,7 +146,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Purr.aiff"
+            "command": "bash $HOME/.claude/stop-sound-hook.sh"
           },
           {
             "type": "command",
