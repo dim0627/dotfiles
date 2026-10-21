@@ -69,7 +69,12 @@
       "mcp__claude_ai_Linear__list_issues",
       "mcp__claude_ai_Notion__notion-fetch",
       "mcp__render__get_metrics",
-      "mcp__sentry__get_sentry_resource"
+      "mcp__sentry__get_sentry_resource",
+      "Bash(gh workflow run deploy-server-app.yml --ref * -f environment=dev)",
+      "Bash(gh workflow run deploy-web-admin.yml --ref * -f environment=dev)",
+      "Bash(gh workflow run deploy-web-persona.yml --ref * -f environment=dev)",
+      "Bash(gh workflow run deploy-web-agency.yml --ref * -f environment=dev)",
+      "Bash(gh workflow run deploy-image-resizer.yml --ref * -f environment=dev)"
     ],
     "deny": [],
     "defaultMode": "auto"
