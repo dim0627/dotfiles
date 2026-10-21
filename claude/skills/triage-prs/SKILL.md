@@ -89,7 +89,7 @@ gh api user --jq '.login'
 
 ### 🔵 CI失敗
 - **#39 「テスト追加」** — CI失敗 (test-unit: FAILURE)
-  → `/fix-ci` で診断
+  → 失敗ログを見て修正
 
 ### 🚀 マージ可能
 - **#35 「バグ修正」** — 🟢 Approved, ✅ CI通過
@@ -178,5 +178,5 @@ gh pr view {number} --json comments --jq '.comments[] | {author: .author.login, 
 ## 注意事項
 
 - このスキルは状況報告のみ。コード修正やコミットは行わない
-- 修正が必要な場合は `/address-review <番号>` や `/fix-ci` への誘導を提案する
+- 修正が必要な場合は `/address-review <番号>` やCI失敗ログからの修正への誘導を提案する
 - `--with-comments` なしでもコメント「件数」は表示する（中身は見ない）
