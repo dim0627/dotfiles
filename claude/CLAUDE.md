@@ -50,11 +50,11 @@
 ## 作業後
 
 - スキル（`SKILL.md`・references）や CLAUDE.md / AGENTS.md を作成・編集したら、`writing-for-agents` スキルで自分でレビューパスをかける
-- PRを作成したら、`/review-code` と `/security-review` を並列で流すか確認する。差分を見たうえでの推奨（両方・片方・不要）を理由つきで必ず添える（基準なしだと毎回「両方」に倒れる）
-  - `/security-review`: 認証・認可、外部入力、外部I/O、secrets、依存追加に触れていれば推奨。docs・設定だけなら不要と言い切る
-  - `/review-code`: ロジックの変更があれば推奨。文言修正程度なら不要
-  - 手元/Codespace の確認と合わせて1回の質問にまとめる
-- 大きめのPR（目安: 数百行・10ファイル超）なら `/annotate-pr` も確認する。順番はレビュー対応の後（後の push で行がずれ、コメントが outdated になる）
+- PRを作成したら、`/review-code` と `/security-review` を流すかを差分から決めて、確認せずに流す。流した・流さなかったを理由つきで1行報告する（基準なしだと毎回「両方」に倒れる）
+  - `/security-review`: 認証・認可、外部入力、外部I/O、secrets、依存追加に触れていれば流す。docs・設定だけなら流さない
+  - `/review-code`: ロジックの変更があれば流す。文言修正程度なら流さない
+  - 基準の境界にあるとき（設定だけだが権限まわり等）だけ Daisuke に聞く
+- 大きめのPR（目安: 数百行・10ファイル超）なら `/annotate-pr` も確認せずに流す。順番はレビュー指摘への対応を push した後（後の push で行がずれ、コメントが outdated になる）
 
 ## コーディング原則
 
@@ -74,7 +74,7 @@
 
 - 全体の型チェック・ビルドなど手元で数分かかるコマンドは、GitHub Codespace に逃がす。手順は `offload-codespace` スキル
 - DB を使う全体のテストは CI に任せる
-- `/review-code` は走らせる前に毎回、手元か Codespace かを Daisuke に確認する（手元の負荷を知るのは本人だけ）。Codespace なら Skill の args に `--cs` を付ける
+- `/review-code` は手元で流す。Codespace（Skill の args に `--cs`）は Daisuke が指定したときだけ（月の無料枠をすぐ使い切る）
 - 手元で回すもの: 1ファイルのテスト・lint など数十秒で終わるもの、手元だけの認証に依存するもの。ローカルDB・docker compose に依存するものも、リポジトリに `.devcontainer/` が無ければ手元
 
 ## ブラウザ操作

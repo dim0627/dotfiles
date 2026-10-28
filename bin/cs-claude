@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 手元の作業ツリーの状態を Codespace に送り、そこで claude -p を実行して出力を返す。
 # Usage: cs-claude '<prompt>'   (例: cs-claude '/review-code ブランチ差分をレビュー')
-#        cs-claude --warm       Codespace を起こして準備が終わるまで待つだけ（SessionStart フックから呼ぶ）
+#        cs-claude --warm       Codespace を起こして準備が終わるまで待つだけ
 # Codespace はリポジトリごとに1台（表示名 claude-offload）を使い回し、無ければ作る。
 # claude 本体と skills/agents は dotfiles の install.sh が入れる。認証は Codespaces のユーザーシークレット CLAUDE_CODE_OAUTH_TOKEN。
 set -euo pipefail

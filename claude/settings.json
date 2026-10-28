@@ -101,11 +101,6 @@
             "type": "command",
             "command": "sh $HOME/.claude/gcloud-auth-check.sh --hook",
             "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "bash $HOME/.claude/cs-warm-hook.sh",
-            "timeout": 10
           }
         ]
       },

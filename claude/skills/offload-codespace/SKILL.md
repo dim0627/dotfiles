@@ -10,7 +10,7 @@ description: 全体の型チェック・ビルドなど、手元で数分かか�
 ### 1. 準備
 
 - `gh auth status` の scopes に `codespace` があるか見る。無ければユーザーに `! gh auth refresh -h github.com -s codespace` を打ってもらう（ブラウザ承認が要るので自分では打てない）
-- `gh api repos/<owner>/<repo>/codespaces/machines` で選べるマシンを引く。既定は 8コア/32GB（`premiumLinux`）
+- `gh api repos/<owner>/<repo>/codespaces/machines` で選べるマシンを引く。既定は選べる中で一番コア数が少ないもの。無料枠はコア数を掛けた時間で減るので、遅くて困るときだけ上げる
 
 完了: scope があり、使うマシン名が決まっている。
 
@@ -32,6 +32,7 @@ gh codespace list -R <owner>/<repo> --json name,displayName,state,lastUsedAt
 作成は課金が発生する。次を示してユーザーの明示の GO を待つ:
 
 - マシン（コア数・メモリ）と、そのマシンの1時間あたりの単価（[料金ページ](https://docs.github.com/en/billing/concepts/product-billing/github-codespaces) で確かめる）
+- 今月の無料枠の残り。`gh api /users/<user>/settings/billing/usage` の `usageItems` のうち、`product` が Codespaces で `unitType` が `Hours` のものを、SKU のコア数を掛けて足すと使ったコア時間になる。これを料金ページにあるプランの枠から引く。`user` スコープが無いと 404 になるので、そのときはユーザーに `! gh auth refresh -h github.com -s user` を打ってもらう。Org に課金されるリポジトリでは個人の枠は減らない
 - 課金先は作るまで分からないこと（Org の Settings → Codespaces → General の「Codespace ownership」で決まる）
 - この作業のあいだ使い回すこと。操作が無ければ30分で止まり、止まったまま24時間たつと自動で消える
 
