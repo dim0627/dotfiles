@@ -50,7 +50,10 @@
 ## 作業後
 
 - スキル（`SKILL.md`・references）や CLAUDE.md / AGENTS.md を作成・編集したら、`writing-for-agents` スキルで自分でレビューパスをかける
-- PRを作成したら、`/review-code` を流すか確認する
+- PRを作成したら、`/review-code` と `/security-review` を並列で流すか確認する。差分を見たうえでの推奨（両方・片方・不要）を理由つきで必ず添える（基準なしだと毎回「両方」に倒れる）
+  - `/security-review`: 認証・認可、外部入力、外部I/O、secrets、依存追加に触れていれば推奨。docs・設定だけなら不要と言い切る
+  - `/review-code`: ロジックの変更があれば推奨。文言修正程度なら不要
+  - 手元/Codespace の確認と合わせて1回の質問にまとめる
 - 大きめのPR（目安: 数百行・10ファイル超）なら `/annotate-pr` も確認する。順番はレビュー対応の後（後の push で行がずれ、コメントが outdated になる）
 
 ## コーディング原則
