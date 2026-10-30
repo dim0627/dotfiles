@@ -27,12 +27,11 @@
 
 ## 長い文章の見せ方
 
-- まとめ・下書きなど、見出しが3つ以上ある Markdown はファイルに書き、Daisuke の画面に glow で開く
-- `HERDR_ENV=1` なら herdr のペインで開く。全画面に広げ、`q` で閉じるとペインごと消える形:
-  1. `herdr pane split --current --direction right` の結果から `pane_id` を取る
-  2. `herdr pane zoom <pane_id>`
-  3. `herdr pane run <pane_id> 'glow -p -w $(($(tput cols)-2)) <file>; exit'`（`-w` が無いと折り返しがペイン幅を超えて崩れる）
-- herdr の外なら `glow <file>` のコマンドを応答に書く
+- Daisuke に読ませる Markdown（まとめ・調査メモ・下書き等）を新しく書いたら、確認せずに glow で開く
+- `HERDR_ENV=1` なら herdr の右ペインに開く。`q` で閉じるとペインごと消える形:
+  1. `herdr pane split --current --direction right` の結果から `.result.pane.pane_id` を取る
+  2. `herdr pane run <pane_id> 'glow -p -w $(($(tput cols)-2)) <file>; exit'`（`-w` が無いと折り返しがペイン幅を超えて崩れる）
+- herdr の外なら `glow -p <file>` のコマンドを応答に書く
 - 開いた後も、応答にファイルの絶対パスを書く（あとで開き直せるように）
 
 ## このファイルの記法について
