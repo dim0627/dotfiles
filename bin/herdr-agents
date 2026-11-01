@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Live overview of every agent Herdr knows about; enter jumps to the selected one.
+set -euo pipefail
+
+self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+interval="${HERDR_AGENTS_INTERVAL:-3}"
+
+# Formatting lives in jq: macOS bash 3.2 printf pads by bytes, and IFS=tab
+# read collapses empty fields.
+list() {
+  herdr agent list | jq -r '
+    def rank: {"blocked":0,"done":1,"working":2,"unknown":3,"idle":4}[.agent_status] // 5;
+    def style: {
+      "blocked": ["\u001b[1;41;97m", "⛔"],
+      "done":    ["\u001b[1;32m",    "✅"],
+      "working": ["\u001b[1;33m",    "⏳"],
+      "unknown": ["\u001b[35m",      "❔"]
+    }[.agent_status] // ["\u001b[2m", "💤"];
+    def pad($n): .[0:$n] | . + (" " * ($n - length));
+    .result.agents | sort_by(rank, .workspace_id) | .[]
+    | style as [$color, $icon]
+    | ((.cwd // "") | split("/") | map(select(. != "")) | last // "-") as $repo
+    | (if .agent_session.kind == "id" then .agent_session.value else "-" end) as $session
+    | [ .pane_id, $session,
+        "\($color)\($icon) \(.agent_status | pad(8))\u001b[0m \u001b[36m\($repo | pad(16))\u001b[0m \(.terminal_title_stripped // "")"
+      ] | @tsv'
+}
+
+transcript_for() {
+  [[ "$1" == - ]] && return
+  local f
+  for f in "$HOME"/.claude/projects/*/"$1".jsonl; do
+    [[ -f "$f" ]] && { printf '%s\n' "$f"; return; }
+  done
+}
+
+history() {
+  jq -r --slurp '
+    def text: if type == "string" then . else map(select(.type == "text").text) | join(" ") end;
+    def oneline($n): gsub("\\s+"; " ") | if length > $n then .[0:$n] + "…" else . end;
+    # Slash commands are recorded wrapped in tags.
+    def slash: if startswith("<command-") then
+        ([capture("<command-name>(?<v>[^<]*)").v] | first // "")
+        + " " + ([capture("<command-args>(?<v>[^<]*)").v] | first // "")
+      else . end;
+    ([ .[] | select(.type == "user" and .isMeta != true) | .message.content | text | slash
+       | select(length > 0 and (startswith("<") | not)
+                and (startswith("This session is being continued") | not)) ]
+     | .[-5:]) as $prompts
+    | ([ .[] | select(.type == "assistant") | .message.content[]? | select(.type == "text") | .text ]
+       | last // "") as $reply
+    | "\u001b[1mRecent prompts\u001b[0m",
+      ($prompts[] | "  ❯ " + oneline(160)),
+      "",
+      "\u001b[1mLast reply\u001b[0m",
+      "  " + ($reply | oneline(400))' "$1"
+}
+
+preview() {
+  local pane="$1" session="$2" f
+  f=$(transcript_for "$session")
+  if [[ -n "$f" ]]; then
+    history "$f"
+    printf '\n\033[1mScreen\033[0m\n'
+  fi
+  herdr agent read "$pane" --source recent-unwrapped --lines 200 --format ansi 2>/dev/null | tail -n 30
+}
+
+case "${1:-}" in
+  list) list; exit ;;
+  preview) preview "$2" "$3"; exit ;;
+esac
+
+list | fzf --ansi --delimiter '\t' --with-nth 3.. \
+  --track --id-nth 1 --no-sort --layout reverse --cycle \
+  --header 'enter: jump & close  ctrl-r: reload  esc: quit' \
+  --preview "$self preview {1} {2}" --preview-window 'down,60%,wrap' \
+  --bind "every($interval):reload($self list)" \
+  --bind "ctrl-r:reload($self list)" \
+  --bind "enter:execute-silent(herdr agent focus {1})+abort"
