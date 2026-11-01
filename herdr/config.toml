@@ -39,3 +39,10 @@ navigate_workspace_up = "k"
 navigate_workspace_down = "j"
 navigate_pane_up = "ctrl+k"
 navigate_pane_down = "ctrl+j"
+
+[[keys.command]]
+key = "prefix+a"
+type = "popup"
+command = "/Users/tsujidaisuke/bin/herdr-agents"
+width = "90%"
+height = "90%"

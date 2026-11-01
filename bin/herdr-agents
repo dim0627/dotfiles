@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Live overview of every agent Herdr knows about; enter jumps to the selected one.
+set -euo pipefail
+
+self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+interval="${HERDR_AGENTS_INTERVAL:-3}"
+
+list() {
+  herdr agent list | jq -r '
+    def rank: {"blocked":0,"done":1,"working":2,"unknown":3,"idle":4}[.agent_status] // 5;
+    .result.agents | sort_by(rank, .workspace_id) | .[]
+    | [.pane_id, .agent_status, (.cwd|split("/")|last), .terminal_title_stripped] | @tsv' |
+  while IFS=$'\t' read -r pane status repo title; do
+    case "$status" in
+      blocked) color='\033[1;41;97m'; icon='⛔' ;;
+      done)    color='\033[1;32m';    icon='✅' ;;
+      working) color='\033[1;33m';    icon='⏳' ;;
+      *)       color='\033[2m';       icon='💤' ;;
+    esac
+    printf "%s\t${color}%s %-8s\033[0m \033[36m%-16.16s\033[0m %s\n" "$pane" "$icon" "$status" "$repo" "$title"
+  done
+}
+
+preview() {
+  herdr agent read "$1" --source recent-unwrapped --lines 200 --format ansi 2>/dev/null \
+    | tail -n "${FZF_PREVIEW_LINES:-40}"
+}
+
+# fzf has no timer, so a sidecar loop pushes reloads through --listen; it
+# exits on its own once fzf is gone and the POST fails.
+ticker() {
+  while sleep "$interval"; do
+    curl -fsS -XPOST "localhost:$FZF_PORT" -d "reload($self list)" >/dev/null 2>&1 || exit 0
+  done
+}
+
+case "${1:-}" in
+  list) list; exit ;;
+  preview) preview "$2"; exit ;;
+  ticker) ticker; exit ;;
+esac
+
+list | fzf --ansi --listen --delimiter '\t' --with-nth 2.. \
+  --no-sort --layout reverse --cycle \
+  --header 'enter: jump & close  ctrl-r: reload  esc: quit' \
+  --preview "$self preview {1}" --preview-window 'down,60%,wrap,follow' \
+  --bind "start:execute-silent($self ticker &)" \
+  --bind "ctrl-r:reload($self list)" \
+  --bind "enter:execute-silent(herdr agent focus {1})+abort"
