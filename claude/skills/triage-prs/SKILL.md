@@ -26,7 +26,7 @@ owner/repo を特定する。
 ### 2. 自分のPR一覧を取得
 
 ```bash
-gh pr list --author @me --json number,title,url,reviewDecision,mergeable,statusCheckRollup,updatedAt,headRefName,additions,deletions,reviewRequests
+gh pr list --author @me --json number,title,url,reviewDecision,mergeable,statusCheckRollup,updatedAt,headRefName,additions,deletions,reviewRequests,labels
 ```
 
 PRが0件の場合はその旨を報告して終了。
@@ -48,6 +48,8 @@ PRが0件の場合はその旨を報告して終了。
   - 全て `SUCCESS` → ✅ CI通過
   - いずれか `FAILURE` → 🔵 CI失敗
   - いずれか `PENDING` or `null` → ⏳ CI実行中
+- **labels**:
+  - `needs-manual-check` がある → 🧪 動作確認待ち。ユーザー本人が手で確かめる番なので、他の状態と別に数える
 
 ### 4. 未返信コメント数の取得（デフォルトモード）
 
@@ -72,9 +74,10 @@ gh api user --jq '.login'
 1. 💥 コンフリクト（マージブロック）
 2. 🔴 Changes Requested（対応必要）
 3. 🔵 CI失敗（修正必要）
-4. 🟢 Approved + CI通過（マージ可能！）
-5. 🟡 Review待ち
-6. ⏳ CI実行中
+4. 🧪 動作確認待ち（ラベルが付いている間は、Approved + CI通過でもマージ可能に入れない）
+5. 🟢 Approved + CI通過（マージ可能！）
+6. 🟡 Review待ち
+7. ⏳ CI実行中
 
 #### 出力フォーマット
 
@@ -90,6 +93,10 @@ gh api user --jq '.login'
 ### 🔵 CI失敗
 - **#39 「テスト追加」** — CI失敗 (test-unit: FAILURE)
   → 失敗ログを見て修正
+
+### 🧪 動作確認待ち
+- **#43 「決済画面の文言変更」** — 🟢 Approved, ✅ CI通過, チェックリスト 1/3
+  → 本文のチェックリストを確かめて、終わったら `needs-manual-check` を外す
 
 ### 🚀 マージ可能
 - **#35 「バグ修正」** — 🟢 Approved, ✅ CI通過

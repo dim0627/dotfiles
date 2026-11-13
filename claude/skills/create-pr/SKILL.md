@@ -2,7 +2,7 @@
 name: create-pr
 description: 現在のブランチからプルリクエストを作成する。ユーザーが/create-prと打ったときだけでなく、PRを作成する場面では常にこのスキルを使うこと（gh pr create の直接実行は禁止 — --body 指定はリポジトリのPRテンプレートを黙って上書きするため。テンプレート踏襲・ブランチ確認等の手順を内包）
 user-invocable: true
-allowed-tools: Bash(git status*), Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Bash(git log *), Bash(git diff *), Bash(git add *), Bash(git commit *), Bash(git merge-base *)
+allowed-tools: Bash(git status*), Bash(git push*), Bash(git checkout -b *), Bash(gh pr create*), Bash(git log *), Bash(git diff *), Bash(git add *), Bash(git commit *), Bash(git merge-base *), Bash(gh pr edit *), Bash(gh label list*), Bash(gh label create *), Bash(gh repo view*), Bash(gh api user*)
 ---
 
 現在のブランチの変更内容を分析し、PRを作成する。
@@ -68,6 +68,22 @@ EOF
 )"
 ```
 
-### 7. 結果報告
+### 7. 動作確認が残る場合の目印
 
-作成したPRのURLを報告する。
+作業中に自分で実行・観測して確かめられなかったことがあれば、PR に目印を付けてユーザーに渡す。例: 画面の見た目や操作、本番・ステージングでしか起きない挙動、手元で流せず CI にも無いテスト、外部サービスとの実際の疎通。テストが通っただけで挙動を見ていないものも含める。全部確かめられたなら何もしない。
+
+1. 本文に、確かめる手順を1項目1行のチェックリスト（`- [ ]`）で書く。テンプレートに動作確認の節があればそこへ、無ければ「手動での動作確認」の節を足す。各項目は、何をして何が見えれば OK かまで書く
+2. ラベル `needs-manual-check` を付ける。目印はラベルだけにする（確認後にユーザーが外せば跡が残らない）
+
+ラベルはリポジトリにあるときだけ付ける。自分がオーナーのリポジトリなら作ってから付ける。どちらでもなければチェックリストだけにして、ラベルを付けなかったことを報告で伝える:
+
+```bash
+gh label list --search needs-manual-check --json name --jq '.[].name'
+gh repo view --json owner --jq '.owner.login'   # gh api user --jq .login と同じなら自分のリポジトリ
+gh label create needs-manual-check --color FBCA04 --description "Needs a manual check before merge"
+gh pr edit <番号> --add-label needs-manual-check
+```
+
+### 8. 結果報告
+
+作成したPRのURLを報告する。動作確認の目印を付けたなら、確かめてほしい項目を1行ずつ添える。
