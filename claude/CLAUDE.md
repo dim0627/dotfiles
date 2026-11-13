@@ -123,6 +123,7 @@
 ## 外部ドキュメント記法
 
 - Linear / Notion は箇条書き・見出し・太字を優先し、テーブル記法は使わない
+- PR 本文・コミットで別の issue / PR に触れるときは番号だけで書く（「#123 の上に積む」）。closes / fixes / resolves（活用形も）が番号の直前にあると、説明文でもマージ時に GitHub がその issue / PR を閉じる
 
 ## Cloudflare CLI - cf - v20260928
 
