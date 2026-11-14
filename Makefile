@@ -55,6 +55,9 @@ link-agents:
 	ln -sf $(SCRIPT_DIR)agents/skill-lock.json $(HOME_DIR)/.agents/.skill-lock.json
 
 # ~/.config/herdr/ にはセッション・ログ・ソケットも同居するので、設定ファイルだけをリンクする。
+# Herdr.app は編集済みの keys.json に新しいデフォルトを足さない。追加キーはアップデート時に手で取り込む。
 link-herdr:
 	mkdir -p $(HOME_DIR)/.config/herdr
 	ln -sf $(SCRIPT_DIR)herdr/config.toml $(HOME_DIR)/.config/herdr/config.toml
+	mkdir -p $(HOME_DIR)/.config/herdr-app
+	ln -sf $(SCRIPT_DIR)herdr-app/keys.json $(HOME_DIR)/.config/herdr-app/keys.json
