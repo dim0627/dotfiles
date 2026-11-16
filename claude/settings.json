@@ -91,6 +91,17 @@
             "command": "bash $HOME/.claude/cs-offload-hook.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I $HOME/.claude/pr-ready-review-hook.py",
+            "timeout": 60,
+            "statusMessage": "Checking review threads before gh pr ready"
+          }
+        ]
       }
     ],
     "SessionStart": [
