@@ -2,7 +2,7 @@
 name: investigate-alert
 description: 今起きている（か直前に起きた）システム全体の障害の初動調査。アラート・障害報告を受け取ったとき、または監視ツールのキャプチャ・エラーメッセージ・スタックトレースを貼られたときに使う
 user-invocable: true
-allowed-tools: Agent, AskUserQuestion, Read, Grep, Glob, Bash, WebFetch, mcp__sentry__*, mcp__cf-observability__*, mcp__cf-builds__*
+allowed-tools: Agent, AskUserQuestion, Read, Grep, Glob, Bash, WebFetch, Monitor, TaskStop, mcp__plugin_slack_slack__slack_read_thread, mcp__sentry__*, mcp__cf-observability__*, mcp__cf-builds__*
 ---
 
 **今起きている（か直前に起きた）障害の初動調査。** 原因クラスの切り分けと根拠の提示まで。修正とポストモーテムは含まない。
@@ -37,6 +37,14 @@ allowed-tools: Agent, AskUserQuestion, Read, Grep, Glob, Bash, WebFetch, mcp__se
 
 - 同じ時刻の過去の回を並べ、高い回と低い回を分ける条件を探す（曜日・イベント・月替わりなど）
 - 最悪の回を、鳴った回とは別に分解する。鳴った回が最悪とは限らず、最悪の回にしか出ない原因がある
+
+**起点が Slack スレッドなら、報告まで追い続ける。** 調査中も他の人がロールバック・手動オペ・別の観測を書き足していく。`channel_id` と親の `message_ts` を控え、最後に読んだ投稿の ts を持ち回る。`slack_read_thread` に `oldest` で渡すと差分だけ取れる。新しい投稿は手順4の「外から入った情報」として扱い、画像は直接読む。
+
+- **手順1-b で投げてから報告まで**: `Monitor` で10秒おきに tick を出し（`while true; do sleep 10; echo tick; done`。`timeout_ms` は上限にして、時間切れでも通知過多で止められても張り直す）、起きるたびに差分を読む。障害中は数分の遅れが致命傷になるので、間隔はトークンより速さで決める。本体はエージェント待ちでターンを終えている時間が長く、ここで読まないと投稿はエージェントが返るまで放置される。前提を崩す投稿（「10:32 にロールバックした」など）なら、走っている反証エージェントを `TaskStop` で止めて手順2から組み替える
+- **手順2・4・5に入る直前**: tick とは別に差分を読む。tick の間隔ぶんの遅れを判断に乗せないため
+- 報告を出したら Monitor を止める
+
+追うのは本体自身。バックグラウンドのエージェントは終わるまで本体に何も届かず、要約を挟むと誰の数値か・画像の形が落ちる。
 
 ### 1. 観測（並列）
 
