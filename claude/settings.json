@@ -1,7 +1,6 @@
 {
   "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods"
   },
   "permissions": {
     "allow": [
