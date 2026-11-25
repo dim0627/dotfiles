@@ -2,6 +2,7 @@
   "env": {
     "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods"
   },
+  "remoteControlAtStartup": true,
   "permissions": {
     "allow": [
       "Bash(git log *)",
